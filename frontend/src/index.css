@@ -1,0 +1,186 @@
+@import "tailwindcss";
+
+/* UniFlow design tokens (see Profile design spec). Use these instead of hex values. */
+@theme {
+  --color-primary: #F5C518;
+  --color-primary-hover: #F7D24A;
+  --color-primary-soft: #FEF9E7;
+  --color-primary-border: #FBE38A;
+  --color-ink: #0F172A;
+  --color-muted: #64748B;
+  --color-subtle: #94A3B8;
+  --color-line: #E2E8F0;
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F8FAFC;
+  --color-chip: #F1F5F9;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+@layer components {
+  .auth-input {
+    @apply block w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-[11px] text-[13px] text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-[#F5C518] focus:bg-white focus:ring-[3px] focus:ring-[#F5C518]/15;
+  }
+}
+
+.auth-shell {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.auth-form-side {
+  align-items: safe center;
+  scrollbar-width: thin;
+}
+
+@media (max-height: 780px) and (min-width: 1024px) {
+  .auth-form-extras { display: none; }
+  .auth-form-content { padding-block: 1rem; }
+  .auth-form-side { padding-block: 1rem; }
+}
+
+.auth-visual-shade {
+  background: linear-gradient(180deg, rgba(13, 20, 32, .34) 0%, rgba(13, 20, 32, .24) 34%, rgba(13, 20, 32, .82) 100%), linear-gradient(90deg, rgba(13, 20, 32, .38), transparent 85%);
+}
+
+.auth-grain {
+  opacity: .13;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+.auth-orbit {
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, .19);
+  border-radius: 9999px;
+  transform: rotate(-27deg);
+  pointer-events: none;
+}
+
+.auth-orbit-one { inset: 2% -3% 0 5%; }
+.auth-orbit-two { inset: 12% -8% 9% 0; border-color: rgba(245, 197, 24, .3); transform: rotate(22deg); }
+
+.auth-art-image img { filter: saturate(.82) contrast(1.02); }
+
+.auth-floating-mark { animation: auth-float 5s ease-in-out infinite; }
+.auth-float-top { animation: auth-float 6s ease-in-out infinite; }
+.auth-float-bottom { animation: auth-float 5.5s ease-in-out -2s infinite; }
+
+@keyframes auth-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-floating-mark, .auth-float-top, .auth-float-bottom { animation: none; }
+}
+
+/* Shared select styling for filters, forms, and editor controls. */
+select {
+  appearance: none;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 36px 0 12px;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  background-color: #FFFFFF;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  line-height: 1.25;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+select:hover:not(:disabled) {
+  border-color: #94A3B8;
+}
+
+select:focus-visible {
+  outline: none;
+  border-color: #F5C518;
+  box-shadow: 0 0 0 3px rgb(245 197 24 / 16%);
+}
+
+select:disabled {
+  cursor: not-allowed;
+  color: #94A3B8;
+  background-color: #F8FAFC;
+}
+
+select option {
+  padding: 6px 10px;
+  color: #1E293B;
+  background-color: #FFFFFF;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+select option:checked {
+  color: #111827;
+  background-color: #FEF3C7;
+}
+
+label:has(+ select) {
+  display: block;
+  margin-bottom: 6px !important;
+}
+
+/* Workspace switcher popover follows the same compact control system. */
+.workspace-switcher-trigger {
+  height: 40px;
+  border-radius: 8px;
+}
+
+.workspace-switcher-menu {
+  border-color: #CBD5E1;
+  border-radius: 8px;
+  background: #FFFFFF;
+  padding: 4px;
+}
+
+.workspace-switcher-option {
+  min-height: 36px;
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+@layer base {
+  :root {
+    --primary: #F5C518;
+    --primary-hover: #E5B510;
+    --dark: #111827;
+    --bg: #F8FAFC;
+    --panel: #FFFFFF;
+    --panel-alt: #F8FAFC;
+    --border: #E2E8F0;
+    --muted: #64748B;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg);
+    color: var(--dark);
+    color-scheme: light;
+  }
+
+  /* Custom subtle scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+  }
+}

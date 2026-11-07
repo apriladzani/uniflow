@@ -1,0 +1,6 @@
+{
+  "name": "Uni Inside Media CMS",
+  "description": "Professional Content Management System (CMS) for Uni Inside Media - manage editorial calendars, production workflows, storyboards, media assets, and team contributor credits.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

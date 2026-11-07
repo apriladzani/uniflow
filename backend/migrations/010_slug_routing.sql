@@ -1,0 +1,5 @@
+-- Adds stable URLs without changing existing UUID keys or foreign-key relationships.
+-- migrate.js applies these additive changes idempotently in this order:
+--   workspaces.slug VARCHAR(160) NOT NULL UNIQUE
+--   content_plans.slug VARCHAR(160) NOT NULL UNIQUE(workspace_id, slug)
+-- It backfills existing names first and applies numeric suffixes to collisions.
