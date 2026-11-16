@@ -6,7 +6,9 @@ import { slugify } from './slug.js';
 
 dotenv.config({ path: fileURLToPath(new URL('./.env', import.meta.url)) });
 
-const expectedDatabase = 'uniflow';
+// Safety guard: only migrate the intended database. Hosted environments
+// (e.g. Kroombox, where the DB is named uniin_uniflow_api) set MIGRATE_EXPECTED_DB.
+const expectedDatabase = process.env.MIGRATE_EXPECTED_DB || 'uniflow';
 const migrationVersion = '001_initial_schema';
 const migrationPath = new URL('./migrations/001_initial_schema.sql', import.meta.url);
 const usernameMigrationVersion = '002_usernames';

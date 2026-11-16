@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# MCP config (contains API token)
+.mcp.json
