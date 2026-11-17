@@ -152,7 +152,7 @@ const AuthScreen: React.FC = () => {
         <div className="auth-grain absolute inset-0" />
         <div className="relative z-10 flex h-full w-full flex-col p-7 xl:p-10">
           <div className="flex items-center gap-3 text-white">
-            <BrandLogo className="h-11 w-11 rounded-[14px] shadow-lg shadow-black/10" iconClassName="h-5 w-5" strokeWidth={2.4} />
+            <BrandLogo className="h-11 w-11 rounded-[14px] shadow-lg shadow-black/10" imageClassName="h-12 w-auto max-w-[160px] rounded-xl shadow-lg shadow-black/10" iconClassName="h-5 w-5" strokeWidth={2.4} />
             <div><div className="text-[15px] font-extrabold tracking-tight">UNI INSIDE MEDIA</div><div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/60">Creative Studio</div></div>
           </div>
 
@@ -184,7 +184,7 @@ const AuthScreen: React.FC = () => {
       </section>
 
       <section className="auth-form-side relative flex h-full min-h-0 items-center justify-center overflow-y-auto overscroll-contain px-5 py-6 sm:px-10 lg:px-10 xl:px-16">
-        <div className="absolute left-6 top-6 flex items-center gap-2.5 lg:hidden"><BrandLogo className="h-9 w-9 rounded-xl" iconClassName="h-4 w-4" /><span className="text-xs font-extrabold tracking-wide text-slate-900">UNI INSIDE MEDIA</span></div>
+        <div className="absolute left-6 top-6 flex items-center gap-2.5 lg:hidden"><BrandLogo className="h-9 w-9 rounded-xl" imageClassName="h-10 w-auto max-w-[120px] rounded-lg" iconClassName="h-4 w-4" /><span className="text-xs font-extrabold tracking-wide text-slate-900">UNI INSIDE MEDIA</span></div>
         <div className="auth-form-content w-full max-w-[420px] py-10 lg:py-0">
           <div className="mb-5 hidden items-center justify-between lg:flex"><div className="text-xs font-semibold text-slate-400">Member access</div><div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> YOUR CREATIVE WORKSPACE</div></div>
           {forgotPassword ? (

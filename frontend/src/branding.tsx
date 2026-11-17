@@ -43,8 +43,10 @@ export function useBranding(): Branding {
 }
 
 /** The app logo: the admin-uploaded image when set, otherwise the yellow clapperboard mark. */
-export const BrandLogo: React.FC<{ className: string; iconClassName: string; strokeWidth?: number }> = ({ className, iconClassName, strokeWidth }) => {
+export const BrandLogo: React.FC<{ className: string; iconClassName: string; strokeWidth?: number; imageClassName?: string }> = ({ className, iconClassName, strokeWidth, imageClassName }) => {
   const { logoUrl } = useBranding();
-  if (logoUrl) return <img src={logoUrl} alt="Logo" className={`${className} object-contain`} />;
+  // Uploaded logos get their own (usually larger) box and a hairline border instead of a shadow,
+  // so white-background images stay crisp against white UI.
+  if (logoUrl) return <img src={logoUrl} alt="Logo" className={`${imageClassName || className} object-contain bg-white ring-1 ring-slate-200/80`} />;
   return <div className={`${className} bg-[#F5C518] text-[#111827] flex items-center justify-center`}><Clapperboard className={iconClassName} strokeWidth={strokeWidth} /></div>;
 };

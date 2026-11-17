@@ -40,7 +40,7 @@ interface BrandingInfo { logo: AssetInfo | null; favicon: AssetInfo | null }
 const ASSETS: Record<BrandingAsset, { title: string; help: string; accept: string; maxBytes: number }> = {
   logo: {
     title: 'Logo',
-    help: 'Tampil di kiri atas sidebar dan di halaman login. Gunakan gambar persegi (disarankan 128×128 atau lebih) berformat PNG, JPG, atau WEBP, maksimal 512 KB. PNG transparan paling rapi.',
+    help: 'Tampil di kiri atas sidebar dan di halaman login. Ruang kosong di sekeliling logo dipotong otomatis supaya logo terlihat jelas. Format PNG, JPG, atau WEBP, maksimal 512 KB.',
     accept: 'image/png,image/jpeg,image/webp',
     maxBytes: 512 * 1024,
   },
@@ -66,6 +66,72 @@ const readAsDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
   reader.onerror = () => reject(new Error('File tidak bisa dibaca.'));
   reader.readAsDataURL(file);
 });
+
+/**
+ * Makes an uploaded logo read well at sidebar size: trims the empty margin around the artwork
+ * (transparent pixels, or pixels matching the corner background colour), keeps a small even
+ * padding and the logo's own aspect ratio, and scales it to at most 512px wide/high as PNG.
+ * Falls back to the original file on any failure.
+ */
+async function prepareLogo(file: File): Promise<string> {
+  const original = await readAsDataUrl(file);
+  try {
+    const image = new Image();
+    image.src = original;
+    await image.decode();
+    const scale = Math.min(1, 1024 / Math.max(image.naturalWidth, image.naturalHeight));
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const source = document.createElement('canvas');
+    source.width = width;
+    source.height = height;
+    const sourceContext = source.getContext('2d', { willReadFrequently: true });
+    if (!sourceContext) return original;
+    sourceContext.drawImage(image, 0, 0, width, height);
+    const { data } = sourceContext.getImageData(0, 0, width, height);
+
+    const [br, bg, bb, ba] = [data[0], data[1], data[2], data[3]];
+    const transparentBackground = ba < 16;
+    const isContent = (index: number) => {
+      const alpha = data[index + 3];
+      if (transparentBackground) return alpha > 16;
+      if (alpha < 16) return false;
+      return Math.abs(data[index] - br) + Math.abs(data[index + 1] - bg) + Math.abs(data[index + 2] - bb) > 48;
+    };
+    let top = height, left = width, right = -1, bottom = -1;
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        if (!isContent((y * width + x) * 4)) continue;
+        if (x < left) left = x;
+        if (x > right) right = x;
+        if (y < top) top = y;
+        if (y > bottom) bottom = y;
+      }
+    }
+    if (right < 0) return original; // Blank image: nothing to trim.
+
+    const cropWidth = right - left + 1;
+    const cropHeight = bottom - top + 1;
+    const padding = Math.round(Math.min(cropWidth, cropHeight) * 0.12);
+    const fullWidth = cropWidth + padding * 2;
+    const fullHeight = cropHeight + padding * 2;
+    const ratio = Math.min(1, 512 / Math.max(fullWidth, fullHeight));
+    const output = document.createElement('canvas');
+    output.width = Math.round(fullWidth * ratio);
+    output.height = Math.round(fullHeight * ratio);
+    const context = output.getContext('2d');
+    if (!context) return original;
+    if (!transparentBackground) {
+      context.fillStyle = `rgba(${br},${bg},${bb},${ba / 255})`;
+      context.fillRect(0, 0, output.width, output.height);
+    }
+    context.imageSmoothingQuality = 'high';
+    context.drawImage(source, left, top, cropWidth, cropHeight, padding * ratio, padding * ratio, cropWidth * ratio, cropHeight * ratio);
+    return output.toDataURL('image/png');
+  } catch {
+    return original;
+  }
+}
 
 export const AdminView: React.FC = () => {
   const { showToast } = useCMS();
@@ -120,7 +186,7 @@ export const AdminView: React.FC = () => {
     if (file.size > rules.maxBytes) { showToast('error', 'File terlalu besar', `Ukuran ${rules.title.toLowerCase()} maksimal 512 KB.`); return; }
     setSaving(asset);
     try {
-      const { branding: saved } = await api<{ branding: BrandingInfo }>(`/admin/branding/${asset}`, { method: 'PUT', body: JSON.stringify({ dataUrl: await readAsDataUrl(file) }) });
+      const { branding: saved } = await api<{ branding: BrandingInfo }>(`/admin/branding/${asset}`, { method: 'PUT', body: JSON.stringify({ dataUrl: asset === 'logo' ? await prepareLogo(file) : await readAsDataUrl(file) }) });
       applyBranding(saved);
       showToast('success', `${rules.title} diperbarui`, `${rules.title} baru sudah aktif untuk semua pengguna.`);
     } catch (err) {
@@ -268,9 +334,9 @@ export const AdminView: React.FC = () => {
                 <h2 className="text-base font-bold text-slate-900">{rules.title}</h2>
                 <p className="mt-1 text-sm text-slate-500">{rules.help}</p>
                 <div className="mt-5 flex items-center gap-5">
-                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50">
+                  <div className={`flex h-20 shrink-0 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 ${asset === 'logo' && info ? 'min-w-20 max-w-[180px] px-3' : 'w-20'}`}>
                     {info
-                      ? <img src={assetSrc(info)} alt={`${rules.title} saat ini`} className={asset === 'logo' ? 'h-14 w-14 rounded-xl object-contain' : 'h-10 w-10 object-contain'} />
+                      ? <img src={assetSrc(info)} alt={`${rules.title} saat ini`} className={asset === 'logo' ? 'h-12 w-auto max-w-full rounded-lg object-contain' : 'h-10 w-10 object-contain'} />
                       : asset === 'logo'
                         ? <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#F5C518] text-[#111827]"><Clapperboard className="h-6 w-6" strokeWidth={2.2} /></div>
                         : <ImageIcon size={22} className="text-slate-400" />}
