@@ -21,6 +21,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useCMS } from '../../context/CMSContext';
+import { BrandLogo } from '../../branding';
 
 export const Sidebar: React.FC = () => {
   const {
@@ -115,9 +116,7 @@ export const Sidebar: React.FC = () => {
       >
         <div className={`h-20 flex items-center border-b border-slate-200 shrink-0 bg-white ${sidebarOpen ? 'justify-between px-3 sm:px-5' : 'justify-center px-0'}`}>
           <div className={`flex items-center overflow-hidden ${sidebarOpen ? 'gap-3.5' : 'justify-center'}`}>
-            <div className="w-10 h-10 rounded-xl bg-[#F5C518] text-[#111827] flex items-center justify-center shrink-0 shadow-sm">
-              <Clapperboard className="w-5 h-5 stroke-[2.2]" />
-            </div>
+            <BrandLogo className="w-10 h-10 rounded-xl shrink-0 shadow-sm" iconClassName="w-5 h-5 stroke-[2.2]" />
 
             {sidebarOpen && (
               <div className="flex flex-col truncate">

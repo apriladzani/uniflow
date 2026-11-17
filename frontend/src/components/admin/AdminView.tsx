@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Building2, Image as ImageIcon, LoaderCircle, RefreshCw, Search, ShieldCheck, Trash2, Upload, Users } from 'lucide-react';
+import { Building2, Clapperboard, Image as ImageIcon, LoaderCircle, Palette, RefreshCw, Search, ShieldCheck, Trash2, Upload, Users } from 'lucide-react';
 import { api, apiUrl } from '../../api/client';
 import { useCMS } from '../../context/CMSContext';
+import { setBranding } from '../../branding';
 
-type AdminTab = 'users' | 'workspaces' | 'favicon';
+type AdminTab = 'users' | 'workspaces' | 'branding';
+type BrandingAsset = 'logo' | 'favicon';
 
 interface AdminUser {
   id: string;
@@ -32,28 +34,31 @@ interface AdminWorkspace {
 }
 
 interface Overview { users: number; activeUsers: number; workspaces: number; contents: number }
-interface FaviconInfo { url: string; mime: string; updatedAt: string }
+interface AssetInfo { url: string; mime: string; updatedAt: string }
+interface BrandingInfo { logo: AssetInfo | null; favicon: AssetInfo | null }
 
-const FAVICON_ACCEPT = 'image/png,image/x-icon,image/vnd.microsoft.icon,image/jpeg,image/webp,.ico';
-const FAVICON_MAX_BYTES = 512 * 1024;
+const ASSETS: Record<BrandingAsset, { title: string; help: string; accept: string; maxBytes: number }> = {
+  logo: {
+    title: 'Logo',
+    help: 'Tampil di kiri atas sidebar dan di halaman login. Gunakan gambar persegi (disarankan 128×128 atau lebih) berformat PNG, JPG, atau WEBP, maksimal 512 KB. PNG transparan paling rapi.',
+    accept: 'image/png,image/jpeg,image/webp',
+    maxBytes: 512 * 1024,
+  },
+  favicon: {
+    title: 'Favicon',
+    help: 'Ikon kecil di tab browser, berlaku untuk semua pengunjung. Gunakan gambar persegi (disarankan 64×64 atau lebih) berformat PNG, ICO, JPG, atau WEBP, maksimal 512 KB.',
+    accept: 'image/png,image/x-icon,image/vnd.microsoft.icon,image/jpeg,image/webp,.ico',
+    maxBytes: 512 * 1024,
+  },
+};
+
+const assetSrc = (info: AssetInfo | null) => (info ? apiUrl(info.url.replace(/^\/api/, '')) : '');
 
 const formatDate = (value: string | null) => {
   if (!value) return '—';
   const date = new Date(value.replace(' ', 'T'));
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
 };
-
-/** Points every <link rel="icon"> at the given URL (or the stored favicon endpoint). */
-export function applyFavicon(url: string) {
-  let links = Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel~="icon"]'));
-  if (!links.length) {
-    const link = document.createElement('link');
-    link.rel = 'icon';
-    document.head.appendChild(link);
-    links = [link];
-  }
-  links.forEach((link) => { link.href = url; });
-}
 
 const readAsDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
   const reader = new FileReader();
@@ -68,12 +73,12 @@ export const AdminView: React.FC = () => {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [workspaces, setWorkspaces] = useState<AdminWorkspace[]>([]);
-  const [favicon, setFavicon] = useState<FaviconInfo | null>(null);
+  const [branding, setBrandingInfo] = useState<BrandingInfo>({ logo: null, favicon: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
-  const [saving, setSaving] = useState(false);
-  const fileInput = useRef<HTMLInputElement | null>(null);
+  const [saving, setSaving] = useState<BrandingAsset | ''>('');
+  const fileInputs = useRef<Record<BrandingAsset, HTMLInputElement | null>>({ logo: null, favicon: null });
 
   const load = async () => {
     setLoading(true);
@@ -83,12 +88,12 @@ export const AdminView: React.FC = () => {
         api<{ overview: Overview }>('/admin/overview'),
         api<{ users: AdminUser[] }>('/admin/users'),
         api<{ workspaces: AdminWorkspace[] }>('/admin/workspaces'),
-        api<{ favicon: FaviconInfo | null }>('/admin/favicon'),
+        api<{ branding: BrandingInfo }>('/admin/branding'),
       ]);
       setOverview(o.overview);
       setUsers(u.users);
       setWorkspaces(w.workspaces);
-      setFavicon(f.favicon);
+      setBrandingInfo(f.branding);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Data admin gagal dimuat.');
     } finally {
@@ -104,38 +109,45 @@ export const AdminView: React.FC = () => {
   const filteredWorkspaces = useMemo(() => !needle ? workspaces : workspaces.filter((workspace) =>
     [workspace.name, workspace.slug, workspace.ownerName, workspace.ownerEmail].some((value) => value?.toLowerCase().includes(needle))), [workspaces, needle]);
 
-  const uploadFavicon = async (file: File) => {
-    if (file.size > FAVICON_MAX_BYTES) { showToast('error', 'File terlalu besar', 'Ukuran favicon maksimal 512 KB.'); return; }
-    setSaving(true);
+  // Updates the admin cards and the live logo/favicon everywhere in the app.
+  const applyBranding = (next: BrandingInfo) => {
+    setBrandingInfo(next);
+    setBranding({ logoUrl: next.logo?.url || '', faviconUrl: next.favicon?.url || '' });
+  };
+
+  const uploadAsset = async (asset: BrandingAsset, file: File) => {
+    const rules = ASSETS[asset];
+    if (file.size > rules.maxBytes) { showToast('error', 'File terlalu besar', `Ukuran ${rules.title.toLowerCase()} maksimal 512 KB.`); return; }
+    setSaving(asset);
     try {
-      const { favicon: saved } = await api<{ favicon: FaviconInfo }>('/admin/favicon', { method: 'PUT', body: JSON.stringify({ dataUrl: await readAsDataUrl(file) }) });
-      setFavicon(saved);
-      applyFavicon(apiUrl(saved.url.replace(/^\/api/, '')));
-      showToast('success', 'Favicon diperbarui', 'Favicon baru sudah aktif untuk semua pengguna.');
+      const { branding: saved } = await api<{ branding: BrandingInfo }>(`/admin/branding/${asset}`, { method: 'PUT', body: JSON.stringify({ dataUrl: await readAsDataUrl(file) }) });
+      applyBranding(saved);
+      showToast('success', `${rules.title} diperbarui`, `${rules.title} baru sudah aktif untuk semua pengguna.`);
     } catch (err) {
-      showToast('error', 'Gagal menyimpan favicon', err instanceof Error ? err.message : 'Coba lagi.');
+      showToast('error', `Gagal menyimpan ${rules.title.toLowerCase()}`, err instanceof Error ? err.message : 'Coba lagi.');
     } finally {
-      setSaving(false);
-      if (fileInput.current) fileInput.current.value = '';
+      setSaving('');
+      const input = fileInputs.current[asset];
+      if (input) input.value = '';
     }
   };
 
-  const removeFavicon = async () => {
-    setSaving(true);
+  const removeAsset = async (asset: BrandingAsset) => {
+    const rules = ASSETS[asset];
+    setSaving(asset);
     try {
-      await api('/admin/favicon', { method: 'DELETE' });
-      setFavicon(null);
-      applyFavicon('data:,');
-      showToast('success', 'Favicon dihapus', 'Situs kembali tanpa favicon khusus.');
+      const { branding: saved } = await api<{ branding: BrandingInfo }>(`/admin/branding/${asset}`, { method: 'DELETE' });
+      applyBranding(saved);
+      showToast('success', `${rules.title} dihapus`, asset === 'logo' ? 'Kembali ke logo bawaan.' : 'Situs kembali tanpa favicon khusus.');
     } catch (err) {
-      showToast('error', 'Gagal menghapus favicon', err instanceof Error ? err.message : 'Coba lagi.');
-    } finally { setSaving(false); }
+      showToast('error', `Gagal menghapus ${rules.title.toLowerCase()}`, err instanceof Error ? err.message : 'Coba lagi.');
+    } finally { setSaving(''); }
   };
 
   const tabs: { id: AdminTab; label: string; icon: React.ElementType; count?: number }[] = [
     { id: 'users', label: 'Users', icon: Users, count: users.length },
     { id: 'workspaces', label: 'Workspaces', icon: Building2, count: workspaces.length },
-    { id: 'favicon', label: 'Favicon', icon: ImageIcon },
+    { id: 'branding', label: 'Branding', icon: Palette },
   ];
 
   return (
@@ -144,7 +156,7 @@ export const AdminView: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500"><ShieldCheck size={14} /> Platform admin</div>
           <h1 className="mt-1 text-2xl font-bold text-slate-900">Admin</h1>
-          <p className="mt-1 text-sm text-slate-500">Semua user dan workspace di UniFlow, serta pengaturan favicon situs.</p>
+          <p className="mt-1 text-sm text-slate-500">Semua user dan workspace di UniFlow, serta logo dan favicon situs.</p>
         </div>
         <button onClick={() => void load()} disabled={loading} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
           <RefreshCw size={15} className={loading ? 'animate-spin' : ''} /> Refresh
@@ -176,7 +188,7 @@ export const AdminView: React.FC = () => {
             </button>
           ))}
         </div>
-        {tab !== 'favicon' && (
+        {tab !== 'branding' && (
           <label className="relative mb-2 w-full sm:w-64">
             <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tab === 'users' ? 'Cari nama, email, username' : 'Cari workspace atau owner'} className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-[#F5C518]" />
@@ -245,30 +257,43 @@ export const AdminView: React.FC = () => {
         </div>
       )}
 
-      {!loading && !error && tab === 'favicon' && (
-        <div className="max-w-xl rounded-xl border border-slate-200 bg-white p-6">
-          <h2 className="text-base font-bold text-slate-900">Favicon situs</h2>
-          <p className="mt-1 text-sm text-slate-500">Ikon kecil di tab browser. Berlaku untuk semua pengunjung. Gunakan gambar persegi (disarankan 64×64 atau lebih) dengan format PNG, ICO, JPG, atau WEBP, maksimal 512 KB.</p>
-          <div className="mt-5 flex items-center gap-5">
-            <div className="flex h-20 w-20 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50">
-              {favicon ? <img src={apiUrl(favicon.url.replace(/^\/api/, ''))} alt="Favicon saat ini" className="h-12 w-12 object-contain" /> : <ImageIcon size={22} className="text-slate-400" />}
-            </div>
-            <div className="text-sm">
-              <div className="font-semibold text-slate-800">{favicon ? 'Favicon khusus aktif' : 'Belum ada favicon khusus'}</div>
-              {favicon && <div className="text-xs text-slate-500">Diubah {formatDate(favicon.updatedAt)}</div>}
-            </div>
-          </div>
-          <div className="mt-6 flex flex-wrap gap-2">
-            <input ref={fileInput} type="file" accept={FAVICON_ACCEPT} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadFavicon(file); }} />
-            <button onClick={() => fileInput.current?.click()} disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-[#F5C518] px-4 py-2 text-sm font-semibold text-slate-900 hover:brightness-95 disabled:opacity-60">
-              {saving ? <LoaderCircle size={15} className="animate-spin" /> : <Upload size={15} />} {favicon ? 'Ganti favicon' : 'Upload favicon'}
-            </button>
-            {favicon && (
-              <button onClick={() => void removeFavicon()} disabled={saving} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
-                <Trash2 size={15} /> Hapus
-              </button>
-            )}
-          </div>
+      {!loading && !error && tab === 'branding' && (
+        <div className="grid gap-4 md:grid-cols-2">
+          {(Object.keys(ASSETS) as BrandingAsset[]).map((asset) => {
+            const rules = ASSETS[asset];
+            const info = branding[asset];
+            const busy = saving === asset;
+            return (
+              <div key={asset} className="rounded-xl border border-slate-200 bg-white p-6">
+                <h2 className="text-base font-bold text-slate-900">{rules.title}</h2>
+                <p className="mt-1 text-sm text-slate-500">{rules.help}</p>
+                <div className="mt-5 flex items-center gap-5">
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50">
+                    {info
+                      ? <img src={assetSrc(info)} alt={`${rules.title} saat ini`} className={asset === 'logo' ? 'h-14 w-14 rounded-xl object-contain' : 'h-10 w-10 object-contain'} />
+                      : asset === 'logo'
+                        ? <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#F5C518] text-[#111827]"><Clapperboard className="h-6 w-6" strokeWidth={2.2} /></div>
+                        : <ImageIcon size={22} className="text-slate-400" />}
+                  </div>
+                  <div className="text-sm">
+                    <div className="font-semibold text-slate-800">{info ? `${rules.title} khusus aktif` : asset === 'logo' ? 'Memakai logo bawaan' : 'Belum ada favicon khusus'}</div>
+                    {info && <div className="text-xs text-slate-500">Diubah {formatDate(info.updatedAt)}</div>}
+                  </div>
+                </div>
+                <div className="mt-6 flex flex-wrap gap-2">
+                  <input ref={(element) => { fileInputs.current[asset] = element; }} type="file" accept={rules.accept} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadAsset(asset, file); }} />
+                  <button onClick={() => fileInputs.current[asset]?.click()} disabled={Boolean(saving)} className="inline-flex items-center gap-2 rounded-lg bg-[#F5C518] px-4 py-2 text-sm font-semibold text-slate-900 hover:brightness-95 disabled:opacity-60">
+                    {busy ? <LoaderCircle size={15} className="animate-spin" /> : <Upload size={15} />} {info ? `Ganti ${rules.title.toLowerCase()}` : `Upload ${rules.title.toLowerCase()}`}
+                  </button>
+                  {info && (
+                    <button onClick={() => void removeAsset(asset)} disabled={Boolean(saving)} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
+                      <Trash2 size={15} /> {asset === 'logo' ? 'Pakai logo bawaan' : 'Hapus'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

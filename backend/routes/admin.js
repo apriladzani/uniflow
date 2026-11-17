@@ -8,10 +8,12 @@ export const adminRouter = Router();
 // Public branding (the favicon is fetched by every visitor, signed in or not).
 export const brandingRouter = Router();
 
-const FAVICON_KEY = 'favicon';
-const FAVICON_MAX_BYTES = 512 * 1024;
+// Platform branding assets stored in app_settings, keyed by asset name.
 // SVG is deliberately excluded: it can carry script and is served from the app origin.
-const FAVICON_TYPES = new Set(['image/png', 'image/x-icon', 'image/vnd.microsoft.icon', 'image/jpeg', 'image/webp']);
+const BRANDING_ASSETS = {
+  favicon: { maxBytes: 512 * 1024, types: new Set(['image/png', 'image/x-icon', 'image/vnd.microsoft.icon', 'image/jpeg', 'image/webp']), formats: 'PNG, ICO, JPG, atau WEBP', label: 'favicon' },
+  logo: { maxBytes: 512 * 1024, types: new Set(['image/png', 'image/jpeg', 'image/webp']), formats: 'PNG, JPG, atau WEBP', label: 'logo' },
+};
 
 async function requirePlatformAdmin(request, response, next) {
   try {
@@ -78,53 +80,84 @@ adminRouter.get('/workspaces', async (_request, response, next) => {
   } catch (error) { next(error); }
 });
 
-async function faviconInfo() {
-  const [[row]] = await pool.execute('SELECT value_mime, updated_at FROM app_settings WHERE setting_key=? AND value_blob IS NOT NULL LIMIT 1', [FAVICON_KEY]);
-  return row ? { url: `/api/branding/favicon?v=${encodeURIComponent(new Date(row.updated_at).getTime() || Date.now())}`, mime: row.value_mime, updatedAt: row.updated_at } : null;
+async function brandingInfo() {
+  let rows = [];
+  try {
+    [rows] = await pool.query(`SELECT setting_key, value_mime, updated_at FROM app_settings WHERE setting_key IN ('favicon','logo') AND value_blob IS NOT NULL`);
+  } catch (error) {
+    // Before migration 015 runs the table does not exist; behave as "nothing customised".
+    if (error?.code !== 'ER_NO_SUCH_TABLE') throw error;
+  }
+  const info = { favicon: null, logo: null };
+  for (const row of rows) {
+    info[row.setting_key] = { url: `/api/branding/${row.setting_key}?v=${new Date(row.updated_at).getTime() || Date.now()}`, mime: row.value_mime, updatedAt: row.updated_at };
+  }
+  return info;
 }
 
-adminRouter.get('/favicon', async (_request, response, next) => {
-  try { response.json({ favicon: await faviconInfo() }); } catch (error) { next(error); }
+function brandingAsset(request, response) {
+  const asset = BRANDING_ASSETS[request.params.asset] ? request.params.asset : '';
+  if (!asset) response.status(404).json({ error: 'NOT_FOUND' });
+  return asset;
+}
+
+adminRouter.get('/branding', async (_request, response, next) => {
+  try { response.json({ branding: await brandingInfo() }); } catch (error) { next(error); }
 });
 
 // The browser sends the chosen file as a data URL (same approach as profile avatars).
-adminRouter.put('/favicon', async (request, response, next) => {
+adminRouter.put('/branding/:asset', async (request, response, next) => {
+  const asset = brandingAsset(request, response);
+  if (!asset) return;
+  const rules = BRANDING_ASSETS[asset];
   const match = /^data:([a-z0-9.+/-]+);base64,([A-Za-z0-9+/=]+)$/i.exec(String(request.body?.dataUrl || ''));
   const mime = match?.[1].toLowerCase();
-  if (!match || !FAVICON_TYPES.has(mime)) return response.status(400).json({ error: 'VALIDATION_ERROR', message: 'Favicon harus berformat PNG, ICO, JPG, atau WEBP.' });
+  if (!match || !rules.types.has(mime)) return response.status(400).json({ error: 'VALIDATION_ERROR', message: `${rules.label[0].toUpperCase()}${rules.label.slice(1)} harus berformat ${rules.formats}.` });
   const image = Buffer.from(match[2], 'base64');
-  if (!image.length || image.length > FAVICON_MAX_BYTES) return response.status(400).json({ error: 'VALIDATION_ERROR', message: 'Ukuran favicon maksimal 512 KB.' });
+  if (!image.length || image.length > rules.maxBytes) return response.status(400).json({ error: 'VALIDATION_ERROR', message: `Ukuran ${rules.label} maksimal ${rules.maxBytes / 1024} KB.` });
   try {
     await pool.execute(
       `INSERT INTO app_settings (setting_key, value_blob, value_mime, updated_by_user_id) VALUES (?,?,?,?)
        ON DUPLICATE KEY UPDATE value_blob=VALUES(value_blob), value_mime=VALUES(value_mime), updated_by_user_id=VALUES(updated_by_user_id), updated_at=CURRENT_TIMESTAMP(3)`,
-      [FAVICON_KEY, image, mime, request.user.id]
+      [asset, image, mime, request.user.id]
     );
-    response.json({ favicon: await faviconInfo() });
+    response.json({ branding: await brandingInfo() });
   } catch (error) { next(error); }
 });
 
-adminRouter.delete('/favicon', async (_request, response, next) => {
+adminRouter.delete('/branding/:asset', async (request, response, next) => {
+  const asset = brandingAsset(request, response);
+  if (!asset) return;
   try {
-    await pool.execute('DELETE FROM app_settings WHERE setting_key=?', [FAVICON_KEY]);
-    response.json({ favicon: null });
+    await pool.execute('DELETE FROM app_settings WHERE setting_key=?', [asset]);
+    response.json({ branding: await brandingInfo() });
   } catch (error) { next(error); }
 });
 
-brandingRouter.get('/favicon', async (request, response, next) => {
+// Public: which branding assets are customised (the app falls back to its built-in logo).
+brandingRouter.get('/', async (_request, response, next) => {
   try {
-    const [[row]] = await pool.execute('SELECT value_blob, value_mime, updated_at FROM app_settings WHERE setting_key=? LIMIT 1', [FAVICON_KEY]);
+    const info = await brandingInfo();
+    response.set('Cache-Control', 'no-cache');
+    response.json({ faviconUrl: info.favicon?.url || '', logoUrl: info.logo?.url || '' });
+  } catch (error) { next(error); }
+});
+
+brandingRouter.get('/:asset', async (request, response, next) => {
+  const asset = BRANDING_ASSETS[request.params.asset] ? request.params.asset : '';
+  if (!asset) return response.status(404).end();
+  try {
+    const [[row]] = await pool.execute('SELECT value_blob, value_mime, updated_at FROM app_settings WHERE setting_key=? LIMIT 1', [asset]);
     if (!row?.value_blob) return response.status(404).end();
-    const etag = `"fav-${new Date(row.updated_at).getTime()}"`;
+    const etag = `"${asset}-${new Date(row.updated_at).getTime()}"`;
     response.set('ETag', etag);
-    // Revalidate on every load so a new favicon shows up without waiting for caches.
+    // Revalidate on every load so a new image shows up without waiting for caches.
     response.set('Cache-Control', 'public, no-cache');
     response.set('X-Content-Type-Options', 'nosniff');
     if (request.headers['if-none-match'] === etag) return response.status(304).end();
     response.set('Content-Type', row.value_mime || 'image/png');
     response.send(row.value_blob);
   } catch (error) {
-    // Before migration 015 runs the table does not exist; behave as "no custom favicon".
     if (error?.code === 'ER_NO_SUCH_TABLE') return response.status(404).end();
     next(error);
   }
