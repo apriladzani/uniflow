@@ -41,6 +41,7 @@ const userProfileColumns = [
 const googleAuthMigrationVersion = '012_google_auth';
 const passwordResetMigrationVersion = '013_password_reset_otps';
 const passwordResetTokenMigrationVersion = '014_password_reset_tokens';
+const platformAdminMigrationVersion = '015_platform_admin';
 const expectedTables = [
   'schema_migrations', 'users', 'user_sessions', 'workspaces', 'roles', 'permissions',
   'role_permissions', 'workspace_members', 'workspace_invitations', 'workflow_stages',
@@ -382,6 +383,26 @@ try {
     await connection.execute('INSERT INTO schema_migrations (version, name) VALUES (?, ?)', [passwordResetTokenMigrationVersion, 'Separate password reset step after code verification']);
   }
 
+  const [[platformAdminMigration]] = await connection.execute(
+    'SELECT version FROM schema_migrations WHERE version = ? LIMIT 1', [platformAdminMigrationVersion]
+  );
+  if (!platformAdminMigration) {
+    const [[adminColumn]] = await connection.query(
+      "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='users' AND COLUMN_NAME='is_platform_admin' LIMIT 1"
+    );
+    if (!adminColumn) await connection.query('ALTER TABLE users ADD COLUMN is_platform_admin TINYINT(1) NOT NULL DEFAULT 0 AFTER status');
+    // Platform-wide key/value settings (branding such as the favicon), independent of any workspace.
+    await connection.query(`CREATE TABLE IF NOT EXISTS app_settings (
+      setting_key VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+      value_blob MEDIUMBLOB NULL,
+      value_mime VARCHAR(60) NULL,
+      updated_by_user_id CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NULL,
+      updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+      PRIMARY KEY (setting_key)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+    await connection.execute('INSERT INTO schema_migrations (version, name) VALUES (?, ?)', [platformAdminMigrationVersion, 'Platform admin flag and app-wide settings']);
+  }
+
   const [[fkCountRow]] = await connection.query(
     `SELECT COUNT(*) AS count FROM information_schema.TABLE_CONSTRAINTS
      WHERE CONSTRAINT_SCHEMA = DATABASE() AND CONSTRAINT_TYPE = 'FOREIGN KEY'`
@@ -404,7 +425,7 @@ try {
     additiveTablesCreated: ['storyboard_scene_media_links', 'media_upload_requests', 'workspace_cdn_roots'],
     totalCmsTables: expectedTables.length + 3,
     foreignKeyCount,
-    migrationRecorded: [migrationVersion, usernameMigrationVersion, storyboardMigrationVersion, footageMigrationVersion, virtualMediaMigrationVersion, cdnParentMigrationVersion, uploadIdempotencyMigrationVersion, workspaceCdnRootsMigrationVersion, publicationCreditsMigrationVersion, slugRoutingMigrationVersion, userProfileMigrationVersion, googleAuthMigrationVersion, passwordResetMigrationVersion, passwordResetTokenMigrationVersion],
+    migrationRecorded: [migrationVersion, usernameMigrationVersion, storyboardMigrationVersion, footageMigrationVersion, virtualMediaMigrationVersion, cdnParentMigrationVersion, uploadIdempotencyMigrationVersion, workspaceCdnRootsMigrationVersion, publicationCreditsMigrationVersion, slugRoutingMigrationVersion, userProfileMigrationVersion, googleAuthMigrationVersion, passwordResetMigrationVersion, passwordResetTokenMigrationVersion, platformAdminMigrationVersion],
     usernameColumnAdded: true,
     backfilledVerifiedPublications,
     backfilledContentCredits,

@@ -9,6 +9,7 @@ import { mediaRouter } from './routes/media.js';
 import { aiAssistantRouter } from './routes/aiAssistant.js';
 import { settingsRouter } from './routes/settings.js';
 import { profileRouter } from './routes/profile.js';
+import { adminRouter, brandingRouter } from './routes/admin.js';
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
@@ -68,6 +69,8 @@ app.use('/api', async (_request, response, next) => {
 
 app.use('/api/auth', authRouter);
 app.use('/api/profile', profileRouter);
+app.use('/api/admin', adminRouter);
+app.use('/api/branding', brandingRouter);
 app.use('/api/workspaces', workspaceRouter);
 app.use('/api/workspaces', contentRouter);
 app.use('/api/workspaces', memberRouter);

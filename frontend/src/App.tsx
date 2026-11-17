@@ -15,6 +15,7 @@ import { TeamPerformanceView } from './components/performance/TeamPerformanceVie
 import { ContentDebtView } from './components/debt/ContentDebtView';
 import { TeamManagementView } from './components/team/TeamManagementView';
 import { SettingsView } from './components/settings/SettingsView';
+import { AdminView } from './components/admin/AdminView';
 import { GoogleSignInButton } from './components/auth/GoogleSignInButton';
 import { ForgotPasswordForm } from './components/auth/ForgotPasswordForm';
 import { ContentModal } from './components/modals/ContentModal';
@@ -84,10 +85,28 @@ const AuthScreen: React.FC = () => {
     } finally { setLoading(false); }
   };
 
+  const nameState = name;
+  const usernameState = username;
+  const emailState = email;
+  const passwordState = password;
+  const confirmPasswordState = confirmPassword;
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
     setNotice('');
+    // Browser/password-manager autofill (notably Safari) can fill inputs without firing
+    // React's onChange, leaving state empty. Read the live DOM values at submit time.
+    const form = event.currentTarget;
+    const field = (id: string, fallback: string) => {
+      const input = form.elements.namedItem(id);
+      return input instanceof HTMLInputElement ? input.value : fallback;
+    };
+    const name = field('auth-name', nameState);
+    const username = field('auth-username', usernameState);
+    const email = field('auth-email', emailState);
+    const password = field('auth-password', passwordState);
+    const confirmPassword = field('auth-confirm', confirmPasswordState);
+    setName(name); setUsername(username); setEmail(email); setPassword(password); setConfirmPassword(confirmPassword);
     if (mode === 'signup' && name.trim().length < 2) {
       setError('Please enter your full name.');
       return;
@@ -551,7 +570,7 @@ const WorkspaceManagementPage: React.FC = () => {
 };
 
 const MainContent: React.FC = () => {
-  const { activeTab, setActiveTab, contents, selectedContentId, setSelectedContentId, isAuthenticated, authLoading, showWorkspacePicker, currentWorkspace, contentLoading, contentLoadError, selectWorkspace } = useCMS();
+  const { activeTab, setActiveTab, contents, selectedContentId, setSelectedContentId, isAuthenticated, authLoading, showWorkspacePicker, currentWorkspace, contentLoading, contentLoadError, selectWorkspace, userProfile } = useCMS();
 
   const [routeReady, setRouteReady] = useState(false);
   const [routeError, setRouteError] = useState('');
@@ -600,7 +619,7 @@ const MainContent: React.FC = () => {
       return;
     }
 
-    const validTabs = new Set(['dashboard', 'calendar', 'kanban', 'workspace', 'storyboard', 'workspace-management', 'media', 'ai', 'performance', 'debt', 'team', 'settings', 'profile']);
+    const validTabs = new Set(['dashboard', 'calendar', 'kanban', 'workspace', 'storyboard', 'workspace-management', 'media', 'ai', 'performance', 'debt', 'team', 'settings', 'profile', 'admin']);
     const applyPath = async (path: string) => {
       routeSyncMode.current = 'replace';
       setRouteError('');
@@ -719,6 +738,7 @@ const MainContent: React.FC = () => {
             {activeTab === 'team' && <TeamManagementView />}
             {activeTab === 'settings' && <SettingsView />}
             {activeTab === 'profile' && <ProfileView />}
+            {activeTab === 'admin' && (userProfile.isPlatformAdmin ? <AdminView /> : <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">Halaman ini hanya untuk admin platform.</div>)}
           </div>
         </main>
       </div>

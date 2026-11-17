@@ -18,6 +18,7 @@ import {
   FolderKanban,
   Check,
   LogOut,
+  ShieldCheck,
 } from 'lucide-react';
 import { useCMS } from '../../context/CMSContext';
 
@@ -35,6 +36,7 @@ export const Sidebar: React.FC = () => {
     selectWorkspace,
     logout,
     setShowWorkspacePicker,
+    userProfile,
   } = useCMS();
 
   const [isWorkspaceMenuOpen, setIsWorkspaceMenuOpen] = useState(false);
@@ -91,6 +93,10 @@ export const Sidebar: React.FC = () => {
         { id: 'settings', label: 'Settings', icon: Settings },
       ],
     },
+    ...(userProfile.isPlatformAdmin ? [{
+      groupTitle: 'PLATFORM',
+      items: [{ id: 'admin', label: 'Admin', icon: ShieldCheck }],
+    }] : []),
   ];
 
   return (

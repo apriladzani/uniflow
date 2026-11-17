@@ -181,6 +181,8 @@ export interface SignedInUser {
   name: string;
   email: string;
   avatarUrl: string;
+  /** Platform-wide admin (users.is_platform_admin), independent of workspace roles. */
+  isPlatformAdmin?: boolean;
 }
 
 interface SettingsResponse {
@@ -312,11 +314,11 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     let cancelled = false;
     (async () => {
       try {
-        const { user } = await api<{ user: { id: string; name: string; email: string; avatarUrl?: string | null } }>('/auth/me');
+        const { user } = await api<{ user: { id: string; name: string; email: string; avatarUrl?: string | null; isPlatformAdmin?: boolean } }>('/auth/me');
         const { workspaces: rows } = await api<{ workspaces: Array<{ id: string; slug: string; name: string; description: string | null; role: string; memberCount: number; contentCount: number }> }>('/workspaces');
         if (cancelled) return;
         const loaded = rows.map((row) => ({ id: row.id, slug: row.slug, name: row.name, description: row.description || '', role: row.role, accent: '#F5C518', status: 'Active' as const, contents: [], members: [], mediaAssets: [], activityLogs: [], settings: { ...INITIAL_SETTINGS, organizationName: row.name }, memberCount: row.memberCount, contentCount: row.contentCount }));
-        setSignedInUser({ name: user.name, email: user.email, avatarUrl: user.avatarUrl || '' });
+        setSignedInUser({ name: user.name, email: user.email, avatarUrl: user.avatarUrl || '', isPlatformAdmin: Boolean(user.isPlatformAdmin) });
         setWorkspaces(loaded);
         setIsAuthenticated(true);
         const last = localStorage.getItem(STORAGE_KEYS.LAST_WORKSPACE);
@@ -449,8 +451,8 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const login = async (email: string, password: string) => {
-    const { user } = await api<{ user: { name: string; email: string; avatarUrl?: string } }>('/auth/sign-in', { method: 'POST', body: JSON.stringify({ email, password }) });
-    await loadWorkspaces(); setSignedInUser({ name: user.name, email: user.email, avatarUrl: user.avatarUrl || '' }); setIsAuthenticated(true);
+    const { user } = await api<{ user: { name: string; email: string; avatarUrl?: string; isPlatformAdmin?: boolean } }>('/auth/sign-in', { method: 'POST', body: JSON.stringify({ email, password }) });
+    await loadWorkspaces(); setSignedInUser({ name: user.name, email: user.email, avatarUrl: user.avatarUrl || '', isPlatformAdmin: Boolean(user.isPlatformAdmin) }); setIsAuthenticated(true);
     showToast('success', 'Login successful', 'Your workspaces are ready.');
   };
 
@@ -461,8 +463,8 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const loginWithGoogle = async (credential: string, password?: string) => {
-    const { user, created } = await api<{ user: { name: string; email: string; avatarUrl?: string }; created: boolean }>('/auth/google', { method: 'POST', body: JSON.stringify({ credential, password }) });
-    await loadWorkspaces(); setSignedInUser({ name: user.name, email: user.email, avatarUrl: user.avatarUrl || '' }); setIsAuthenticated(true);
+    const { user, created } = await api<{ user: { name: string; email: string; avatarUrl?: string; isPlatformAdmin?: boolean }; created: boolean }>('/auth/google', { method: 'POST', body: JSON.stringify({ credential, password }) });
+    await loadWorkspaces(); setSignedInUser({ name: user.name, email: user.email, avatarUrl: user.avatarUrl || '', isPlatformAdmin: Boolean(user.isPlatformAdmin) }); setIsAuthenticated(true);
     showToast('success', created ? 'Account created' : 'Login successful', created ? 'Create or join a workspace to get started.' : 'Your workspaces are ready.');
   };
 

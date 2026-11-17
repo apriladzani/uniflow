@@ -120,7 +120,7 @@ authRouter.post('/sign-in', async (request, response, next) => {
   try {
     connection = await pool.getConnection();
     const [rows] = await connection.execute(
-      'SELECT id, email, username, password_hash, display_name, avatar_url, status FROM users WHERE email = ? LIMIT 1',
+      'SELECT id, email, username, password_hash, display_name, avatar_url, status, is_platform_admin FROM users WHERE email = ? LIMIT 1',
       [normalizedEmail]
     );
     const user = rows[0];
@@ -135,7 +135,7 @@ authRouter.post('/sign-in', async (request, response, next) => {
     await connection.execute('UPDATE users SET last_login_at = CURRENT_TIMESTAMP(3) WHERE id = ?', [user.id]);
     await connection.commit();
     setSessionCookie(response, session.token);
-    response.json({ user: { id: user.id, email: user.email, username: user.username, name: user.display_name, avatarUrl: user.avatar_url || '' } });
+    response.json({ user: { id: user.id, email: user.email, username: user.username, name: user.display_name, avatarUrl: user.avatar_url || '', isPlatformAdmin: Number(user.is_platform_admin) === 1 } });
   } catch (error) {
     if (connection?.inTransaction) await connection.rollback();
     next(error);
@@ -188,7 +188,7 @@ authRouter.post('/google', async (request, response, next) => {
   try {
     connection = await pool.getConnection();
     const [rows] = await connection.execute(
-      `SELECT id, email, username, password_hash, display_name, avatar_url, status, google_sub
+      `SELECT id, email, username, password_hash, display_name, avatar_url, status, google_sub, is_platform_admin
        FROM users WHERE google_sub = ? OR email = ? ORDER BY google_sub = ? DESC LIMIT 1`,
       [profile.sub, email, profile.sub]
     );
@@ -244,7 +244,7 @@ authRouter.post('/google', async (request, response, next) => {
     await connection.commit();
     setSessionCookie(response, session.token);
     response.status(newUser ? 201 : 200).json({
-      user: { id: user.id, email: user.email, username, name: user.display_name, avatarUrl: user.avatar_url || '' },
+      user: { id: user.id, email: user.email, username, name: user.display_name, avatarUrl: user.avatar_url || '', isPlatformAdmin: Number(user.is_platform_admin) === 1 },
       created: newUser,
     });
   } catch (error) {
@@ -433,7 +433,7 @@ authRouter.get('/me', async (request, response, next) => {
   }
   try {
     const [rows] = await pool.execute(
-      `SELECT u.id, u.email, u.username, u.display_name AS name, u.avatar_url AS avatarUrl
+      `SELECT u.id, u.email, u.username, u.display_name AS name, u.avatar_url AS avatarUrl, u.is_platform_admin = 1 AS isPlatformAdmin
        FROM user_sessions s JOIN users u ON u.id = s.user_id
        WHERE s.token_hash = ? AND s.expires_at > CURRENT_TIMESTAMP(3) AND u.status = 'active'
        LIMIT 1`,
@@ -445,7 +445,7 @@ authRouter.get('/me', async (request, response, next) => {
       return;
     }
     await pool.execute('UPDATE user_sessions SET last_seen_at = CURRENT_TIMESTAMP(3) WHERE token_hash = ?', [hashToken(token)]);
-    response.json({ user: rows[0] });
+    response.json({ user: { ...rows[0], isPlatformAdmin: Number(rows[0].isPlatformAdmin) === 1 } });
   } catch (error) {
     next(error);
   }
