@@ -207,7 +207,7 @@ const AuthScreen: React.FC = () => {
         </div>
       </section>
 
-      <section className="auth-card auth-anim auth-card-in" style={at(150)} aria-label={mode === 'signin' ? t.signInLabel : t.signUpLabel}>
+      <section className={`auth-card auth-anim auth-card-in${mode === 'signup' && !forgotPassword ? ' is-signup' : ''}`} style={at(150)} aria-label={mode === 'signin' ? t.signInLabel : t.signUpLabel}>
         <div className="auth-form">
           <div className="auth-card-head auth-anim auth-rise" style={rise(0)}>
             <span className="auth-card-eyebrow"><span className="auth-dot auth-dot-green" /> {t.memberAccess}</span>

@@ -26,6 +26,11 @@
 
 .auth-page {
   --u: max(.62px, min(100vw / 1672, 100dvh / 941));
+  /* Card scale: follows the page on small screens, never grows past comfortable UI sizes. */
+  --cu: min(1px, calc(var(--u) * 1.16));
+  /* One padding for all four sides of the card; the card is the form plus that padding. */
+  --card-pad: calc(56 * var(--cu));
+  --card-w: calc(392 * var(--cu) + 2 * var(--card-pad));
   --auth-on-photo-yellow: #F5C518;
   --auth-green: #12B76A;
   --auth-hover: #D9A90C;
@@ -68,7 +73,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  right: calc((640 + 18) * var(--u));
+  right: calc(var(--card-w) + 18 * var(--u));
   width: calc(120 * var(--u));
   background: linear-gradient(270deg, rgba(0, 0, 0, .18), rgba(0, 0, 0, 0));
 }
@@ -324,13 +329,14 @@
 .auth-card {
   /* The card follows the page scale on small screens but never grows past
      comfortable UI sizes on large ones. */
-  --cu: min(1px, calc(var(--u) * 1.16));
   position: relative;
   z-index: 2;
   flex: 0 0 auto;
+  align-self: center;
   display: flex;
   flex-direction: column;
-  width: calc(640 * var(--u));
+  width: var(--card-w);
+  max-height: calc(100% - 40.5 * var(--u));
   margin: calc(18 * var(--u)) calc(18 * var(--u)) calc(22.5 * var(--u)) 0;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -346,9 +352,20 @@
 /* Centred vertically when it fits; scrolls inside the card when it does not. */
 .auth-form {
   width: calc(392 * var(--cu));
-  max-width: calc(100% - 40 * var(--cu));
+  max-width: 100%;
   margin: auto;
-  padding: calc(28 * var(--cu)) 0;
+  padding: var(--card-pad) 0;
+}
+
+/* Sign-up has more fields: drop the feature tiles so the form keeps its breathing room. */
+.auth-card.is-signup .auth-extras { display: none; }
+
+/* Short desktop screens: tighter top/bottom padding so the card does not need to scroll. */
+@media (orientation: landscape) and (min-height: 501px) and (max-height: 820px) {
+  .auth-page { --card-pad: calc(36 * var(--cu)); }
+  .auth-card.is-signup .auth-title { margin: calc(14 * var(--cu)) 0; }
+  .auth-card.is-signup .auth-fields { gap: calc(10 * var(--cu)); }
+  .auth-card.is-signup .auth-legal { display: none; }
 }
 
 .auth-card-head {
@@ -624,7 +641,8 @@
     margin: auto calc(10 * var(--u)) calc(10 * var(--u));
     border-radius: calc(22 * var(--u));
   }
-  .auth-card { --cu: min(1px, var(--u)); }
+  .auth-page { --cu: min(1px, var(--u)); --card-pad: calc(20 * var(--cu)); }
+  .auth-card { align-self: stretch; max-height: none; }
   .auth-form { width: calc(100% - 40 * var(--cu)); max-width: calc(400 * var(--cu)); padding: calc(20 * var(--cu)) 0; }
   .auth-title { margin: calc(14 * var(--cu)) 0 calc(16 * var(--cu)); }
   .auth-input { font-size: max(16px, calc(14 * var(--cu))); }
@@ -659,8 +677,8 @@
   .auth-eyebrow { font-size: calc(9 * var(--u)); margin-bottom: calc(8 * var(--u)); }
   .auth-headline { font-size: calc(28 * var(--u)); line-height: calc(31 * var(--u)); letter-spacing: calc(-1 * var(--u)); }
 
-  .auth-card { width: calc(330 * var(--u)); margin: calc(10 * var(--u)) calc(10 * var(--u)) calc(10 * var(--u)) 0; border-radius: calc(18 * var(--u)); }
-  .auth-card { --cu: calc(var(--u) * .8); }
+  .auth-card { width: calc(330 * var(--u)); max-height: calc(100% - 20 * var(--u)); margin: calc(10 * var(--u)) calc(10 * var(--u)) calc(10 * var(--u)) 0; border-radius: calc(18 * var(--u)); }
+  .auth-page { --cu: calc(var(--u) * .8); --card-pad: calc(10 * var(--cu)); }
   .auth-form { width: calc(100% - 32 * var(--cu)); padding: calc(10 * var(--cu)) 0; }
   /* Keep the language switch; drop the small print so the form fits the short screen. */
   .auth-card-eyebrow, .auth-title p { display: none; }
