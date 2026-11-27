@@ -376,6 +376,8 @@
 
 /* Two fields side by side (sign-up). */
 .auth-row { display: grid; grid-template-columns: 1fr 1fr; gap: calc(12 * var(--cu)); }
+/* Fields stacked one under another, same spacing as the rest of the form. */
+.auth-stack { display: flex; flex-direction: column; gap: calc(14 * var(--cu)); }
 
 /* Sign-up step header: number badge, step name and progress dots. */
 .auth-step {

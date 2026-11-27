@@ -292,14 +292,14 @@ const AuthScreen: React.FC = () => {
             </>}
 
             {mode === 'signup' && signupStep === 2 && (
-              <div className="auth-row auth-step-enter">
+              <div className="auth-stack auth-step-enter">
                 <div className="auth-field">
                   <label htmlFor="auth-password" className="auth-label">{t.password}</label>
-                  <div className="auth-control auth-password"><Lock className="auth-control-icon" /><input id="auth-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" required minLength={8} className="auth-input" placeholder={t.passwordShortPlaceholder} autoFocus /><button type="button" onClick={() => setShowPassword((visible) => !visible)} className="auth-eye" aria-label={showPassword ? t.hidePassword : t.showPassword} aria-pressed={showPassword}>{showPassword ? <EyeOff /> : <Eye />}</button></div>
+                  <div className="auth-control auth-password"><Lock className="auth-control-icon" /><input id="auth-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" required minLength={8} className="auth-input" placeholder={t.newPasswordPlaceholder} autoFocus /><button type="button" onClick={() => setShowPassword((visible) => !visible)} className="auth-eye" aria-label={showPassword ? t.hidePassword : t.showPassword} aria-pressed={showPassword}>{showPassword ? <EyeOff /> : <Eye />}</button></div>
                 </div>
                 <div className="auth-field">
                   <label htmlFor="auth-confirm" className="auth-label">{t.confirmPassword}</label>
-                  <div className="auth-control auth-password"><Lock className="auth-control-icon" /><input id="auth-confirm" type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" required minLength={8} className="auth-input" placeholder={t.confirmShortPlaceholder} /><span className="auth-eye auth-eye-static" aria-hidden="true"><Check /></span></div>
+                  <div className="auth-control auth-password"><Lock className="auth-control-icon" /><input id="auth-confirm" type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" required minLength={8} className="auth-input" placeholder={t.confirmPasswordPlaceholder} /><span className="auth-eye auth-eye-static" aria-hidden="true"><Check /></span></div>
                 </div>
               </div>
             )}
