@@ -265,10 +265,13 @@ const AuthScreen: React.FC = () => {
                 <div className="auth-control"><Mail className="auth-control-icon" /><input id="auth-email" type="email" value={email} readOnly={Boolean(pendingGoogleCredential)} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required className="auth-input" placeholder={t.emailPlaceholder} /></div>
               </div>
               <div className="auth-field auth-anim auth-rise" style={rise(3)}>
-                <div className="auth-label-row"><label htmlFor="auth-password" className="auth-label">{t.password}</label><button type="button" onClick={() => { setError(''); setNotice(''); setForgotPassword(true); }} className="auth-link-quiet">{t.forgotPassword}</button></div>
+                <label htmlFor="auth-password" className="auth-label">{t.password}</label>
                 <div className="auth-control auth-password"><Lock className="auth-control-icon" /><input id="auth-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required minLength={8} className="auth-input" placeholder={t.passwordPlaceholder} /><button type="button" onClick={() => setShowPassword((visible) => !visible)} className="auth-eye" aria-label={showPassword ? t.hidePassword : t.showPassword} aria-pressed={showPassword}>{showPassword ? <EyeOff /> : <Eye />}</button></div>
               </div>
-              <label className="auth-remember auth-anim auth-rise" style={rise(4)}><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} className="auth-checkbox" />{t.rememberMe}</label>
+              <div className="auth-options auth-anim auth-rise" style={rise(4)}>
+                <label className="auth-remember"><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} className="auth-checkbox" />{t.rememberMe}</label>
+                <button type="button" onClick={() => { setError(''); setNotice(''); setForgotPassword(true); }} className="auth-link-strong">{t.forgotPassword}</button>
+              </div>
             </>}
 
             {mode === 'signup' && signupStep === 1 && <>
@@ -321,15 +324,7 @@ const AuthScreen: React.FC = () => {
           <p className="auth-switch auth-anim auth-rise" style={rise(7)}>{mode === 'signin' ? t.noAccount : t.haveAccount}{' '}<button type="button" onClick={() => changeMode(mode === 'signin' ? 'signup' : 'signin')}>{mode === 'signin' ? t.signUp : t.signIn}</button></p>
           </>}
 
-          <div className="auth-extras">
-            <div className="auth-divider auth-anim auth-rise" style={rise(8)}><span>{t.spaceToCreate}</span></div>
-            <div className="auth-tiles auth-anim auth-rise" style={rise(9)}>
-              <div className="auth-tile"><Video /><span>{t.production}</span></div>
-              <div className="auth-tile"><Users /><span>{t.teamwork}</span></div>
-              <div className="auth-tile"><Film /><span>{t.storytelling}</span></div>
-            </div>
-          </div>
-          <p className="auth-legal auth-anim auth-rise" style={rise(10)}>{t.legalBefore}<span>{t.terms}</span>{t.legalAnd}<span>{t.privacy}</span>{t.legalAfter}</p>
+          <p className="auth-legal auth-anim auth-rise" style={rise(8)}>{t.legalBefore}<span>{t.terms}</span>{t.legalAnd}<span>{t.privacy}</span>{t.legalAfter}</p>
         </div>
       </section>
     </main>

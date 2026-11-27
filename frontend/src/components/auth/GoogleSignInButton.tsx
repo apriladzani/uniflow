@@ -63,8 +63,8 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ mode, la
       identity.renderButton(containerRef.current, {
         theme: 'outline',
         size: 'large',
-        shape: 'pill',
-        text: mode === 'signin' ? 'signin_with' : 'signup_with',
+        shape: 'rectangular',
+        text: 'continue_with',
         locale: lang, // Follow the page's EN/ID switch instead of the browser language.
         width: Math.min(containerRef.current.clientWidth || 400, 400), // Google caps the width at 400px.
       });
@@ -74,8 +74,8 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ mode, la
 
   if (!clientId) return null;
   return (
-    <div className="mt-4">
-      <div className="mb-4 flex items-center gap-3"><div className="h-px flex-1 bg-slate-100" /><span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">{AUTH_COPY[lang].or}</span><div className="h-px flex-1 bg-slate-100" /></div>
+    <div>
+      <div className="auth-or"><span>{AUTH_COPY[lang].orContinue}</span></div>
       {failed
         ? <p role="status" className="text-center text-xs text-slate-500">{AUTH_COPY[lang].googleFailed}</p>
         : <div ref={containerRef} className="flex min-h-10 w-full justify-center" />}
