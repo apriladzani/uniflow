@@ -31,7 +31,7 @@
   /* One padding for all four sides of the card; the card is the form plus that padding. */
   --card-pad: calc(56 * var(--cu));
   --card-w: calc(392 * var(--cu) + 2 * var(--card-pad));
-  /* One card height for sign in and sign up, so switching modes never resizes the card. */
+  /* Portrait phones: one card height for sign in and both sign-up steps (tallest is step 1). */
   --card-h: calc(534 * var(--cu) + 2 * var(--card-pad));
   --auth-on-photo-yellow: #F5C518;
   --auth-green: #12B76A;
@@ -334,12 +334,11 @@
   position: relative;
   z-index: 2;
   flex: 0 0 auto;
-  align-self: center;
+  /* Full height panel: the same size for sign in and sign up, whatever the content. */
+  align-self: stretch;
   display: flex;
   flex-direction: column;
   width: var(--card-w);
-  height: var(--card-h);
-  max-height: calc(100% - 40.5 * var(--u));
   margin: calc(18 * var(--u)) calc(18 * var(--u)) calc(22.5 * var(--u)) 0;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -711,7 +710,7 @@
     border-radius: calc(22 * var(--u));
   }
   .auth-page { --cu: min(1px, var(--u)); --card-pad: calc(20 * var(--cu)); }
-  .auth-card { align-self: stretch; height: auto; max-height: none; }
+  .auth-card { align-self: stretch; height: var(--card-h); }
   /* Phones: one field per row so placeholders stay readable. */
   .auth-row { grid-template-columns: 1fr; gap: calc(12 * var(--cu)); }
   .auth-card.is-signup .auth-title p { display: none; }
@@ -745,7 +744,7 @@
   .auth-eyebrow { font-size: calc(9 * var(--u)); margin-bottom: calc(8 * var(--u)); }
   .auth-headline { font-size: calc(28 * var(--u)); line-height: calc(31 * var(--u)); letter-spacing: calc(-1 * var(--u)); }
 
-  .auth-card { width: calc(330 * var(--u)); height: auto; max-height: calc(100% - 20 * var(--u)); margin: calc(10 * var(--u)) calc(10 * var(--u)) calc(10 * var(--u)) 0; border-radius: calc(18 * var(--u)); }
+  .auth-card { width: calc(330 * var(--u)); margin: calc(10 * var(--u)) calc(10 * var(--u)) calc(10 * var(--u)) 0; border-radius: calc(18 * var(--u)); }
   .auth-page { --cu: calc(var(--u) * .8); --card-pad: calc(10 * var(--cu)); }
   .auth-form { width: calc(100% - 32 * var(--cu)); padding: calc(10 * var(--cu)) 0; }
   /* Keep the language switch; drop the small print so the form fits the short screen. */
