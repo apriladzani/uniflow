@@ -19,6 +19,7 @@ import { AdminView } from './components/admin/AdminView';
 import { BrandLogo } from './branding';
 import { GoogleSignInButton } from './components/auth/GoogleSignInButton';
 import { ForgotPasswordForm } from './components/auth/ForgotPasswordForm';
+import { AUTH_COPY, AuthLang, readAuthLang, saveAuthLang } from './components/auth/authCopy';
 import { ContentModal } from './components/modals/ContentModal';
 import { PublishVerificationModal } from './components/modals/PublishVerificationModal';
 import { ContentItem } from './types/cms';
@@ -31,6 +32,14 @@ import videoEditorAvatar from './assets/images/avatar_video_editor_1792208215155
 
 const AuthScreen: React.FC = () => {
   const { login, register, loginWithGoogle } = useCMS();
+  const [lang, setLangState] = useState<AuthLang>(readAuthLang);
+  const t = AUTH_COPY[lang];
+  const setLang = (next: AuthLang) => { setLangState(next); saveAuthLang(next); };
+  useEffect(() => {
+    const previous = document.documentElement.lang;
+    document.documentElement.lang = lang;
+    return () => { document.documentElement.lang = previous; };
+  }, [lang]);
   const [mode, setMode] = useState<'signin' | 'signup'>(() => window.location.hash === '#signup' ? 'signup' : 'signin');
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
@@ -81,7 +90,7 @@ const AuthScreen: React.FC = () => {
         setPendingGoogleCredential(credential);
         setNotice(googleError.message);
       } else {
-        setError(googleError instanceof ApiError ? googleError.message : 'Unable to connect to the server. Please try again.');
+        setError(googleError instanceof ApiError ? googleError.message : t.errNetwork);
       }
     } finally { setLoading(false); }
   };
@@ -109,23 +118,23 @@ const AuthScreen: React.FC = () => {
     const confirmPassword = field('auth-confirm', confirmPasswordState);
     setName(name); setUsername(username); setEmail(email); setPassword(password); setConfirmPassword(confirmPassword);
     if (mode === 'signup' && name.trim().length < 2) {
-      setError('Please enter your full name.');
+      setError(t.errName);
       return;
     }
     if (mode === 'signup' && !/^[a-z0-9_]{3,30}$/i.test(username.trim())) {
-      setError('Username must be 3–30 characters and use only letters, numbers, or underscores.');
+      setError(t.errUsername);
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setError('Enter a valid email address.');
+      setError(t.errEmail);
       return;
     }
     if (password.length < 8) {
-      setError('Your password must contain at least 8 characters.');
+      setError(t.errPasswordLength);
       return;
     }
     if (mode === 'signup' && password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError(t.errPasswordMatch);
       return;
     }
     setLoading(true);
@@ -140,7 +149,7 @@ const AuthScreen: React.FC = () => {
       else await (mode === 'signin' ? login(email, password) : register(name, username, email, password));
     } catch (submitError) {
       if (submitError instanceof ApiError && submitError.code === 'GOOGLE_TOKEN_INVALID') setPendingGoogleCredential('');
-      setError(submitError instanceof ApiError ? submitError.message : 'Unable to connect to the server. Please try again.');
+      setError(submitError instanceof ApiError ? submitError.message : t.errNetwork);
     } finally { setLoading(false); }
   };
 
@@ -154,12 +163,12 @@ const AuthScreen: React.FC = () => {
       <img src={podcastStudioImage} alt="" className="auth-plate" />
       <div className="auth-shade" aria-hidden="true" />
 
-      <section className="auth-hero" aria-label="Uni Inside Media creative studio">
+      <section className="auth-hero" aria-label={t.heroLabel}>
         <div className="auth-brand auth-anim auth-fade-up" style={at(0)}>
           <BrandLogo className="auth-logo" imageClassName="auth-logo auth-logo-image" iconClassName="auth-logo-icon" strokeWidth={2.4} />
           <div>
             <div className="auth-brand-name">UNI INSIDE MEDIA</div>
-            <div className="auth-brand-tagline">Creative Studio</div>
+            <div className="auth-brand-tagline">{t.tagline}</div>
           </div>
         </div>
 
@@ -168,45 +177,50 @@ const AuthScreen: React.FC = () => {
           <div className="auth-ring auth-ring-outer"><span /></div>
           <div className="auth-campus auth-anim auth-scale-in" style={at(300)}>
             <div className="auth-campus-photo"><img src={campusBrollImage} alt="" /></div>
-            <div className="auth-campus-pill"><span className="auth-dot auth-dot-yellow" /> ON LOCATION <span className="auth-campus-sep">·</span> 04:32</div>
+            <div className="auth-campus-pill"><span className="auth-dot auth-dot-yellow" /> {t.onLocation} <span className="auth-campus-sep">·</span> 04:32</div>
           </div>
           <div className="auth-chip auth-chip-shoot">
             <div className="auth-chip-icon"><Video /></div>
-            <div className="auth-chip-text"><div className="auth-chip-title">Shoot day</div><div className="auth-chip-sub">Campus stories · In progress</div></div>
+            <div className="auth-chip-text"><div className="auth-chip-title">{t.shootDay}</div><div className="auth-chip-sub">{t.shootDaySub}</div></div>
             <span className="auth-dot auth-dot-green" />
           </div>
           <div className="auth-chip auth-chip-team">
             <div className="auth-avatars"><img src={creativeLeadAvatar} alt="" /><img src={videoEditorAvatar} alt="" /><span>+4</span></div>
-            <div className="auth-chip-text"><div className="auth-chip-title">Made together</div><div className="auth-chip-sub">One team, one story</div></div>
+            <div className="auth-chip-text"><div className="auth-chip-title">{t.madeTogether}</div><div className="auth-chip-sub">{t.madeTogetherSub}</div></div>
             <Users className="auth-chip-trail" />
           </div>
           <div className="auth-film"><Film /></div>
         </div>
 
         <div className="auth-pitch">
-          <div className="auth-eyebrow auth-anim auth-fade" style={at(700)}><span /> Stories move us forward</div>
+          <div className="auth-eyebrow auth-anim auth-fade" style={at(700)}><span /> {t.eyebrow}</div>
           <h1 className="auth-headline">
-            <span className="auth-line"><span className="auth-anim auth-wipe" style={at(800)}>Make good stories.</span></span>
-            <span className="auth-line"><span className="auth-anim auth-wipe auth-headline-accent" style={at(900)}>Make them together.</span></span>
+            <span className="auth-line"><span className="auth-anim auth-wipe" style={at(800)}>{t.headline1}</span></span>
+            <span className="auth-line"><span className="auth-anim auth-wipe auth-headline-accent" style={at(900)}>{t.headline2}</span></span>
           </h1>
-          <p className="auth-subline auth-anim auth-fade-up" style={at(1050)}>Your creative home for planning, producing, and sharing the stories that bring our community closer.</p>
+          <p className="auth-subline auth-anim auth-fade-up" style={at(1050)}>{t.subline}</p>
         </div>
 
         <div className="auth-footer auth-anim auth-fade" style={at(1150)}>
           <span>© 2025 Uni Inside Media</span>
-          <span className="auth-footer-right"><span className="auth-dot auth-dot-yellow" /> Stories made with purpose</span>
+          <span className="auth-footer-right"><span className="auth-dot auth-dot-yellow" /> {t.footer}</span>
         </div>
       </section>
 
-      <section className="auth-card auth-anim auth-card-in" style={at(150)} aria-label={mode === 'signin' ? 'Sign in' : 'Create an account'}>
+      <section className="auth-card auth-anim auth-card-in" style={at(150)} aria-label={mode === 'signin' ? t.signInLabel : t.signUpLabel}>
         <div className="auth-form">
           <div className="auth-card-head auth-anim auth-rise" style={rise(0)}>
-            <span>Member access</span>
-            <span className="auth-card-status"><span className="auth-dot auth-dot-green" /> YOUR CREATIVE WORKSPACE</span>
+            <span className="auth-card-eyebrow"><span className="auth-dot auth-dot-green" /> {t.memberAccess}</span>
+            <div className="auth-lang" role="group" aria-label={t.languageLabel}>
+              {(['en', 'id'] as const).map((option) => (
+                <button key={option} type="button" lang={option} aria-pressed={lang === option} onClick={() => setLang(option)} className={lang === option ? 'is-active' : ''}>{option.toUpperCase()}</button>
+              ))}
+            </div>
           </div>
           {forgotPassword ? (
             <div className="auth-forgot auth-anim auth-rise" style={rise(1)}>
               <ForgotPasswordForm
+                lang={lang}
                 initialEmail={forgotLinkEmail || email}
                 initialStep={forgotLinkEmail ? 'otp' : 'email'}
                 onCancel={leaveForgotPassword}
@@ -214,45 +228,45 @@ const AuthScreen: React.FC = () => {
                   setEmail(resetEmail);
                   setPassword('');
                   leaveForgotPassword();
-                  setNotice('Your password has been updated. Sign in with your new password.');
+                  setNotice(t.passwordUpdated);
                 }}
               />
             </div>
           ) : <>
           <div className="auth-title auth-anim auth-rise" style={rise(1)}>
-            <h2>{mode === 'signin' ? 'Welcome back' : 'Create your account'}</h2>
-            <p>{mode === 'signin' ? 'Sign in to pick up where your team left off.' : 'Join your team and bring your next story to life.'}</p>
+            <h2>{mode === 'signin' ? t.signInTitle : t.signUpTitle}</h2>
+            <p>{mode === 'signin' ? t.signInSub : t.signUpSub}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="auth-fields" noValidate>
-            {mode === 'signup' && <div className="auth-field auth-anim auth-rise" style={rise(2)}><label htmlFor="auth-name" className="auth-label">Full name</label><input id="auth-name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" required minLength={2} className="auth-input" placeholder="Your full name" /></div>}
-            {mode === 'signup' && <div className="auth-field auth-anim auth-rise" style={rise(2)}><label htmlFor="auth-username" className="auth-label">Username</label><input id="auth-username" value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" required minLength={3} maxLength={30} pattern="[A-Za-z0-9_]{3,30}" className="auth-input" placeholder="e.g. apriladzani" /><p className="auth-hint">Use letters, numbers, and underscores.</p></div>}
-            <div className="auth-field auth-anim auth-rise" style={rise(2)}><label htmlFor="auth-email" className="auth-label">Email address</label><input id="auth-email" type="email" value={email} readOnly={Boolean(pendingGoogleCredential)} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required className="auth-input" placeholder="Enter your email" /></div>
+            {mode === 'signup' && <div className="auth-field auth-anim auth-rise" style={rise(2)}><label htmlFor="auth-name" className="auth-label">{t.fullName}</label><input id="auth-name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" required minLength={2} className="auth-input" placeholder={t.fullNamePlaceholder} /></div>}
+            {mode === 'signup' && <div className="auth-field auth-anim auth-rise" style={rise(2)}><label htmlFor="auth-username" className="auth-label">{t.username}</label><input id="auth-username" value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" required minLength={3} maxLength={30} pattern="[A-Za-z0-9_]{3,30}" className="auth-input" placeholder={t.usernamePlaceholder} /><p className="auth-hint">{t.usernameHint}</p></div>}
+            <div className="auth-field auth-anim auth-rise" style={rise(2)}><label htmlFor="auth-email" className="auth-label">{t.email}</label><input id="auth-email" type="email" value={email} readOnly={Boolean(pendingGoogleCredential)} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required className="auth-input" placeholder={t.emailPlaceholder} /></div>
             <div className="auth-field auth-anim auth-rise" style={rise(3)}>
-              <div className="auth-label-row"><label htmlFor="auth-password" className="auth-label">Password</label>{mode === 'signin' && <button type="button" onClick={() => { setError(''); setNotice(''); setForgotPassword(true); }} className="auth-link-quiet">Forgot password?</button>}</div>
-              <div className="auth-password"><input id="auth-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} required minLength={8} className="auth-input" placeholder={mode === 'signin' ? 'Enter your password' : 'At least 8 characters'} /><button type="button" onClick={() => setShowPassword((visible) => !visible)} className="auth-eye" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}>{showPassword ? <EyeOff /> : <Eye />}</button></div>
+              <div className="auth-label-row"><label htmlFor="auth-password" className="auth-label">{t.password}</label>{mode === 'signin' && <button type="button" onClick={() => { setError(''); setNotice(''); setForgotPassword(true); }} className="auth-link-quiet">{t.forgotPassword}</button>}</div>
+              <div className="auth-password"><input id="auth-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} required minLength={8} className="auth-input" placeholder={mode === 'signin' ? t.passwordPlaceholder : t.newPasswordPlaceholder} /><button type="button" onClick={() => setShowPassword((visible) => !visible)} className="auth-eye" aria-label={showPassword ? t.hidePassword : t.showPassword} aria-pressed={showPassword}>{showPassword ? <EyeOff /> : <Eye />}</button></div>
             </div>
-            {mode === 'signup' && <div className="auth-field auth-anim auth-rise" style={rise(3)}><label htmlFor="auth-confirm" className="auth-label">Confirm password</label><div className="auth-password"><input id="auth-confirm" type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" required minLength={8} className="auth-input" placeholder="Enter your password again" /><span className="auth-eye auth-eye-static" aria-hidden="true"><Check /></span></div></div>}
-            {mode === 'signin' && <label className="auth-remember auth-anim auth-rise" style={rise(4)}><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} className="auth-checkbox" />Remember me</label>}
+            {mode === 'signup' && <div className="auth-field auth-anim auth-rise" style={rise(3)}><label htmlFor="auth-confirm" className="auth-label">{t.confirmPassword}</label><div className="auth-password"><input id="auth-confirm" type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" required minLength={8} className="auth-input" placeholder={t.confirmPasswordPlaceholder} /><span className="auth-eye auth-eye-static" aria-hidden="true"><Check /></span></div></div>}
+            {mode === 'signin' && <label className="auth-remember auth-anim auth-rise" style={rise(4)}><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} className="auth-checkbox" />{t.rememberMe}</label>}
             {error && <div role="alert" className="auth-alert auth-alert-error">{error}</div>}
             {notice && <div role="status" className="auth-alert auth-alert-notice">{notice}</div>}
-            <button type="submit" disabled={loading} className="auth-submit auth-anim auth-rise" style={rise(5)}>{loading ? <><LoaderCircle className="auth-spin" /> {mode === 'signin' ? 'Signing in…' : 'Creating account…'}</> : <>{mode === 'signin' ? 'Sign In' : 'Sign Up'}<ArrowRight className="auth-submit-arrow" /></>}</button>
+            <button type="submit" disabled={loading} className="auth-submit auth-anim auth-rise" style={rise(5)}>{loading ? <><LoaderCircle className="auth-spin" /> {mode === 'signin' ? t.signingIn : t.creatingAccount}</> : <>{mode === 'signin' ? t.signIn : t.signUp}<ArrowRight className="auth-submit-arrow" /></>}</button>
           </form>
 
-          {!pendingGoogleCredential && <div className="auth-google auth-anim auth-rise" style={rise(6)}><GoogleSignInButton mode={mode} onCredential={handleGoogleCredential} /></div>}
+          {!pendingGoogleCredential && <div className="auth-google auth-anim auth-rise" style={rise(6)}><GoogleSignInButton mode={mode} lang={lang} onCredential={handleGoogleCredential} /></div>}
 
-          <p className="auth-switch auth-anim auth-rise" style={rise(7)}>{mode === 'signin' ? 'Don’t have an account?' : 'Already have an account?'}{' '}<button type="button" onClick={() => changeMode(mode === 'signin' ? 'signup' : 'signin')}>{mode === 'signin' ? 'Sign Up' : 'Sign In'}</button></p>
+          <p className="auth-switch auth-anim auth-rise" style={rise(7)}>{mode === 'signin' ? t.noAccount : t.haveAccount}{' '}<button type="button" onClick={() => changeMode(mode === 'signin' ? 'signup' : 'signin')}>{mode === 'signin' ? t.signUp : t.signIn}</button></p>
           </>}
 
           <div className="auth-extras">
-            <div className="auth-divider auth-anim auth-rise" style={rise(8)}><span>A space to create</span></div>
+            <div className="auth-divider auth-anim auth-rise" style={rise(8)}><span>{t.spaceToCreate}</span></div>
             <div className="auth-tiles auth-anim auth-rise" style={rise(9)}>
-              <div className="auth-tile"><Video /><span>Production</span></div>
-              <div className="auth-tile"><Users /><span>Teamwork</span></div>
-              <div className="auth-tile"><Film /><span>Storytelling</span></div>
+              <div className="auth-tile"><Video /><span>{t.production}</span></div>
+              <div className="auth-tile"><Users /><span>{t.teamwork}</span></div>
+              <div className="auth-tile"><Film /><span>{t.storytelling}</span></div>
             </div>
           </div>
-          <p className="auth-legal auth-anim auth-rise" style={rise(10)}>By continuing, you agree to our <span>Terms</span> and <span>Privacy Policy</span>.</p>
+          <p className="auth-legal auth-anim auth-rise" style={rise(10)}>{t.legalBefore}<span>{t.terms}</span>{t.legalAnd}<span>{t.privacy}</span>{t.legalAfter}</p>
         </div>
       </section>
     </main>

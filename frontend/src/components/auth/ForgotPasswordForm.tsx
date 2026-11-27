@@ -1,25 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, LoaderCircle } from 'lucide-react';
 import { api, ApiError } from '../../api/client';
+import { AUTH_COPY, AuthLang } from './authCopy';
 
 type Step = 'email' | 'otp' | 'password';
 
 interface ForgotPasswordFormProps {
+  lang: AuthLang;
   initialEmail: string;
   initialStep: 'email' | 'otp';
   onCancel: () => void;
   onComplete: (email: string) => void;
 }
 
-const errorMessage = (error: unknown) => error instanceof ApiError ? error.message : 'Unable to connect to the server. Please try again.';
-
-const headings: Record<Step, string> = {
-  email: 'Forgot your password?',
-  otp: 'Check your email',
-  password: 'Choose a new password',
-};
-
-export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ initialEmail, initialStep, onCancel, onComplete }) => {
+export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ lang, initialEmail, initialStep, onCancel, onComplete }) => {
+  const t = AUTH_COPY[lang];
   const [step, setStep] = useState<Step>(initialStep);
   const [email, setEmail] = useState(initialEmail);
   const [otp, setOtp] = useState('');
@@ -31,6 +26,8 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ initialE
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [resendIn, setResendIn] = useState(0);
+
+  const errorMessage = (caught: unknown) => caught instanceof ApiError ? caught.message : t.errNetwork;
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -53,7 +50,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ initialE
     event.preventDefault();
     setError('');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setError('Enter a valid email address.');
+      setError(t.errEmail);
       return;
     }
     setLoading(true);
@@ -72,7 +69,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ initialE
     try {
       await requestCode();
       setOtp('');
-      setNotice('If that email has an account, a new code is on its way. Earlier codes no longer work.');
+      setNotice(t.resendNotice);
     } catch (resendError) {
       setError(errorMessage(resendError));
     }
@@ -83,7 +80,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ initialE
     setError('');
     setNotice('');
     if (!/^\d{6}$/.test(otp)) {
-      setError('Enter the 6-digit code from the email.');
+      setError(t.errCode);
       return;
     }
     setLoading(true);
@@ -100,11 +97,11 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ initialE
     event.preventDefault();
     setError('');
     if (password.length < 8) {
-      setError('Your password must contain at least 8 characters.');
+      setError(t.errPasswordLength);
       return;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError(t.errPasswordMatch);
       return;
     }
     setLoading(true);
@@ -122,56 +119,56 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ initialE
   };
 
   const messages = <>
-    {error && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-3 text-xs leading-5 text-rose-700">{error}</div>}
-    {notice && <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-xs leading-5 text-amber-800">{notice}</div>}
+    {error && <div role="alert" className="auth-alert auth-alert-error">{error}</div>}
+    {notice && <div role="status" className="auth-alert auth-alert-notice">{notice}</div>}
   </>;
-  const submitClass = 'group flex w-full items-center justify-center gap-2 rounded-xl bg-[#F5C518] px-4 py-[13px] text-sm font-bold text-slate-950 shadow-[0_5px_12px_rgba(245,197,24,0.17)] transition hover:bg-[#E5B510] disabled:cursor-wait disabled:opacity-70';
   const submitContent = (idle: string, busy: string) => loading
-    ? <><LoaderCircle className="h-4 w-4 animate-spin" /> {busy}</>
-    : <>{idle}<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></>;
+    ? <><LoaderCircle className="auth-spin" /> {busy}</>
+    : <>{idle}<ArrowRight className="auth-submit-arrow" /></>;
+  const strongEmail = (parts: [string, string, string]) => <>{parts[0]}<strong>{parts[1]}</strong>{parts[2]}</>;
 
   return (
     <>
-      <div className="mb-5">
-        <h2 className="text-[30px] font-bold tracking-[-0.04em] text-slate-900">{headings[step]}</h2>
-        <p className="mt-1.5 text-[13px] leading-5 text-slate-500">
-          {step === 'email' && "Enter your account email and we'll send you a 6-digit code."}
-          {step === 'otp' && <>If <span className="font-semibold text-slate-700">{email.trim()}</span> has an account, we sent it a 6-digit code. It expires in 10 minutes.</>}
-          {step === 'password' && <>Code verified. Set the new password for <span className="font-semibold text-slate-700">{email.trim()}</span>.</>}
+      <div className="auth-title">
+        <h2>{step === 'email' ? t.forgotTitle : step === 'otp' ? t.checkEmailTitle : t.newPasswordTitle}</h2>
+        <p>
+          {step === 'email' && t.forgotSub}
+          {step === 'otp' && strongEmail(t.checkEmailSub(email.trim()))}
+          {step === 'password' && strongEmail(t.newPasswordSub(email.trim()))}
         </p>
       </div>
 
       {step === 'email' && (
-        <form onSubmit={handleEmailSubmit} className="space-y-3.5" noValidate>
-          <div><label htmlFor="forgot-email" className="mb-2 block text-xs font-semibold text-slate-700">Email address</label><input id="forgot-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required className="auth-input" placeholder="you@example.com" /></div>
+        <form onSubmit={handleEmailSubmit} className="auth-fields" noValidate>
+          <div className="auth-field"><label htmlFor="forgot-email" className="auth-label">{t.email}</label><input id="forgot-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required className="auth-input" placeholder={t.emailPlaceholder} /></div>
           {messages}
-          <button type="submit" disabled={loading} className={submitClass}>{submitContent('Send code', 'Sending…')}</button>
+          <button type="submit" disabled={loading} className="auth-submit">{submitContent(t.sendCode, t.sending)}</button>
         </form>
       )}
 
       {step === 'otp' && (
-        <form onSubmit={handleOtpSubmit} className="space-y-3.5" noValidate>
-          <div>
-            <div className="mb-2 flex items-center justify-between"><label htmlFor="forgot-otp" className="block text-xs font-semibold text-slate-700">6-digit code</label><button type="button" disabled={resendIn > 0} onClick={handleResend} className="text-[11px] font-semibold text-slate-500 transition hover:text-slate-900 disabled:cursor-default disabled:text-slate-400 disabled:hover:text-slate-400">{resendIn > 0 ? `Resend in ${resendIn}s` : 'Resend code'}</button></div>
-            <input id="forgot-otp" value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" autoFocus required className="auth-input font-mono tracking-[0.3em]" placeholder="000000" />
+        <form onSubmit={handleOtpSubmit} className="auth-fields" noValidate>
+          <div className="auth-field">
+            <div className="auth-label-row"><label htmlFor="forgot-otp" className="auth-label">{t.code}</label><button type="button" disabled={resendIn > 0} onClick={handleResend} className="auth-link-quiet">{resendIn > 0 ? t.resendIn(resendIn) : t.resendCode}</button></div>
+            <input id="forgot-otp" value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" autoFocus required className="auth-input auth-input-code" placeholder="000000" />
           </div>
           {messages}
-          <button type="submit" disabled={loading} className={submitClass}>{submitContent('Verify code', 'Verifying…')}</button>
+          <button type="submit" disabled={loading} className="auth-submit">{submitContent(t.verifyCode, t.verifying)}</button>
         </form>
       )}
 
       {step === 'password' && (
-        <form onSubmit={handlePasswordSubmit} className="space-y-3.5" noValidate>
-          <div><label htmlFor="forgot-password" className="mb-2 block text-xs font-semibold text-slate-700">New password</label><div className="relative"><input id="forgot-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" autoFocus required minLength={8} maxLength={128} className="auth-input pr-12" placeholder="At least 8 characters" /><button type="button" onClick={() => setShowPassword((visible) => !visible)} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-400 transition hover:text-slate-700" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></div>
-          <div><label htmlFor="forgot-confirm" className="mb-2 block text-xs font-semibold text-slate-700">Confirm new password</label><input id="forgot-confirm" type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" required minLength={8} maxLength={128} className="auth-input" placeholder="Enter your new password again" /></div>
+        <form onSubmit={handlePasswordSubmit} className="auth-fields" noValidate>
+          <div className="auth-field"><label htmlFor="forgot-password" className="auth-label">{t.newPassword}</label><div className="auth-password"><input id="forgot-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" autoFocus required minLength={8} maxLength={128} className="auth-input" placeholder={t.newPasswordPlaceholder} /><button type="button" onClick={() => setShowPassword((visible) => !visible)} className="auth-eye" aria-label={showPassword ? t.hidePassword : t.showPassword} aria-pressed={showPassword}>{showPassword ? <EyeOff /> : <Eye />}</button></div></div>
+          <div className="auth-field"><label htmlFor="forgot-confirm" className="auth-label">{t.confirmNewPassword}</label><input id="forgot-confirm" type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" required minLength={8} maxLength={128} className="auth-input" placeholder={t.confirmNewPasswordPlaceholder} /></div>
           {messages}
-          <button type="submit" disabled={loading} className={submitClass}>{submitContent('Update password', 'Updating…')}</button>
+          <button type="submit" disabled={loading} className="auth-submit">{submitContent(t.updatePassword, t.updating)}</button>
         </form>
       )}
 
-      {step === 'otp'
-        ? <button type="button" onClick={() => goToStep('email')} className="mt-5 flex w-full items-center justify-center gap-1.5 text-xs font-semibold text-slate-500 transition hover:text-slate-900"><ArrowLeft className="h-3.5 w-3.5" />Use a different email</button>
-        : <button type="button" onClick={onCancel} className="mt-5 flex w-full items-center justify-center gap-1.5 text-xs font-semibold text-slate-500 transition hover:text-slate-900"><ArrowLeft className="h-3.5 w-3.5" />Back to sign in</button>}
+      <button type="button" onClick={step === 'otp' ? () => goToStep('email') : onCancel} className="auth-back">
+        <ArrowLeft />{step === 'otp' ? t.differentEmail : t.backToSignIn}
+      </button>
     </>
   );
 };
