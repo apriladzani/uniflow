@@ -19,7 +19,8 @@ import { AdminView } from './components/admin/AdminView';
 import { BrandLogo } from './branding';
 import { GoogleSignInButton } from './components/auth/GoogleSignInButton';
 import { ForgotPasswordForm } from './components/auth/ForgotPasswordForm';
-import { AUTH_COPY, AuthLang, AuthTheme, readAuthLang, readAuthTheme, saveAuthLang, saveAuthTheme } from './components/auth/authCopy';
+import { AUTH_COPY, AuthLang, readAuthLang, saveAuthLang } from './components/auth/authCopy';
+import { toggleTheme, useTheme } from './theme';
 import { LanguageFlag } from './components/auth/LanguageFlag';
 import { ContentModal } from './components/modals/ContentModal';
 import { PublishVerificationModal } from './components/modals/PublishVerificationModal';
@@ -36,12 +37,7 @@ const AuthScreen: React.FC = () => {
   const [lang, setLangState] = useState<AuthLang>(readAuthLang);
   const t = AUTH_COPY[lang];
   const setLang = (next: AuthLang) => { setLangState(next); saveAuthLang(next); };
-  const [theme, setThemeState] = useState<AuthTheme>(readAuthTheme);
-  const toggleTheme = () => setThemeState((current) => {
-    const next = current === 'dark' ? 'light' : 'dark';
-    saveAuthTheme(next);
-    return next;
-  });
+  const theme = useTheme();
   useEffect(() => {
     const previous = document.documentElement.lang;
     document.documentElement.lang = lang;

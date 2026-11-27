@@ -1,5 +1,6 @@
 import React from 'react';
-import { Menu, Plus, Bell, Search } from 'lucide-react';
+import { Menu, Plus, Bell, Search, Moon, Sun } from 'lucide-react';
+import { toggleTheme, useTheme } from '../../theme';
 import { useCMS } from '../../context/CMSContext';
 import { apiUrl } from '../../api/client';
 
@@ -79,6 +80,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCreateModal }) => {
       </div>
 
       <div className="flex items-center gap-2.5 shrink-0">
+        <ThemeButton />
         <button
           onClick={() => showToast('info', 'System status', 'The publishing pipeline and CDN connection are operating normally.')}
           className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors relative"
@@ -114,5 +116,23 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCreateModal }) => {
         </button>
       </div>
     </header>
+  );
+};
+
+/** Light/dark switch: moon in light mode, sun in dark mode. */
+const ThemeButton: React.FC = () => {
+  const theme = useTheme();
+  const dark = theme === 'dark';
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      aria-pressed={dark}
+      title={dark ? 'Light mode' : 'Dark mode'}
+    >
+      {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+    </button>
   );
 };

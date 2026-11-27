@@ -914,3 +914,100 @@ label:has(+ select) {
     background: #94A3B8;
   }
 }
+
+/* ==========================================================================
+   Dark mode (html.dark, toggled from the header or the log-in card).
+   Tailwind utilities read their colours from --color-* variables, so dark mode
+   re-points the neutral scale (white/slate) and the tinted chip colours here;
+   components keep their normal classes. The few hard-coded values follow below.
+   ========================================================================== */
+html.dark {
+  /* Neutral scale, inverted: white = card surface, slate-50 = page, slate-900 = main text. */
+  --color-white: #131B29;
+  --color-slate-50: #0E1522;
+  --color-slate-100: #1C2636;
+  --color-slate-200: #273244;
+  --color-slate-300: #36435A;
+  --color-slate-400: #6B7A90;
+  --color-slate-500: #95A3B8;
+  --color-slate-600: #B3BFCF;
+  --color-slate-700: #CAD3DF;
+  --color-slate-800: #DEE4EC;
+  --color-slate-900: #EEF2F7;
+  --color-slate-950: #F8FAFC;
+
+  /* Tinted chips and alerts: soft tints become translucent, dark text becomes light. */
+  --color-amber-50: color-mix(in oklab, var(--color-amber-500) 12%, transparent);
+  --color-amber-100: color-mix(in oklab, var(--color-amber-500) 18%, transparent);
+  --color-amber-200: color-mix(in oklab, var(--color-amber-500) 30%, transparent);
+  --color-amber-700: var(--color-amber-300);
+  --color-amber-800: var(--color-amber-300);
+  --color-amber-900: var(--color-amber-300);
+  --color-yellow-50: color-mix(in oklab, var(--color-yellow-500) 12%, transparent);
+  --color-yellow-100: color-mix(in oklab, var(--color-yellow-500) 18%, transparent);
+  --color-rose-50: color-mix(in oklab, var(--color-rose-500) 12%, transparent);
+  --color-rose-100: color-mix(in oklab, var(--color-rose-500) 18%, transparent);
+  --color-rose-200: color-mix(in oklab, var(--color-rose-500) 30%, transparent);
+  --color-rose-700: var(--color-rose-300);
+  --color-rose-800: var(--color-rose-300);
+  --color-red-50: color-mix(in oklab, var(--color-red-500) 12%, transparent);
+  --color-red-200: color-mix(in oklab, var(--color-red-500) 30%, transparent);
+  --color-red-700: var(--color-red-300);
+  --color-emerald-50: color-mix(in oklab, var(--color-emerald-500) 12%, transparent);
+  --color-emerald-100: color-mix(in oklab, var(--color-emerald-500) 18%, transparent);
+  --color-emerald-200: color-mix(in oklab, var(--color-emerald-500) 30%, transparent);
+  --color-emerald-700: var(--color-emerald-300);
+  --color-emerald-800: var(--color-emerald-300);
+  --color-emerald-900: var(--color-emerald-300);
+  --color-blue-50: color-mix(in oklab, var(--color-blue-500) 12%, transparent);
+  --color-blue-700: var(--color-blue-300);
+  --color-sky-50: color-mix(in oklab, var(--color-sky-500) 12%, transparent);
+  --color-indigo-50: color-mix(in oklab, var(--color-indigo-500) 12%, transparent);
+  --color-indigo-700: var(--color-indigo-300);
+  --color-teal-800: var(--color-teal-300);
+
+  /* App tokens from @theme. */
+  --color-ink: #EEF2F7;
+  --color-muted: #95A3B8;
+  --color-subtle: #6B7A90;
+  --color-line: #273244;
+  --color-surface: #131B29;
+  --color-surface-muted: #0E1522;
+  --color-chip: #1C2636;
+  --color-primary-soft: color-mix(in oklab, #F5C518 14%, transparent);
+  --color-primary-border: color-mix(in oklab, #F5C518 40%, transparent);
+}
+
+html.dark { --bg: #0A101B; --panel: #131B29; --panel-alt: #0E1522; --border: #273244; --muted: #95A3B8; --dark: #EEF2F7; }
+html.dark body { background-color: #0A101B; color: #EEF2F7; color-scheme: dark; }
+
+/* Hard-coded page backgrounds and dark buttons. */
+html.dark .bg-\[\#F8FAFC\] { background-color: #0A101B; }
+html.dark .bg-\[\#111827\] { background-color: #EEF2F7; }
+html.dark .border-\[\#CBD5E1\] { border-color: #36435A; }
+html.dark .text-\[\#B8860B\] { color: #F5C518; }
+
+/* Backdrops behind modals and the mobile menu stay dark. */
+html.dark .bg-slate-900\/20 { background-color: rgb(2 6 15 / .45); }
+html.dark .bg-slate-900\/40 { background-color: rgb(2 6 15 / .6); }
+html.dark .bg-slate-900\/60 { background-color: rgb(2 6 15 / .7); }
+html.dark .bg-slate-950\/60 { background-color: rgb(2 6 15 / .7); }
+html.dark .bg-slate-950\/70 { background-color: rgb(2 6 15 / .78); }
+
+/* White text on photos, black overlays and saturated buttons stays white. */
+html.dark :is([class*="bg-black"], .bg-red-600, .bg-indigo-600, .bg-blue-600, .bg-emerald-600, .bg-rose-600).text-white,
+html.dark .hover\:text-white:hover { color: #FFFFFF; }
+
+/* Shared form controls styled in this file. */
+html.dark select {
+  border-color: #36435A;
+  background-color: #131B29;
+  color: #EEF2F7;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2395A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+html.dark select:disabled { background-color: #0E1522; color: #6B7A90; }
+html.dark select option { color: #EEF2F7; background-color: #131B29; }
+html.dark select option:checked { color: #0F172A; background-color: #F5C518; }
+html.dark .workspace-switcher-menu { border-color: #36435A; background: #131B29; }
+html.dark ::-webkit-scrollbar-thumb { background-color: #36435A; }
+html.dark ::-webkit-scrollbar-thumb:hover { background-color: #6B7A90; }

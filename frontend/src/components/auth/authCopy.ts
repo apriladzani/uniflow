@@ -13,21 +13,7 @@ export function saveAuthLang(lang: AuthLang) {
   try { localStorage.setItem(STORAGE_KEY, lang); } catch { /* storage is optional */ }
 }
 
-export type AuthTheme = 'light' | 'dark';
-const THEME_KEY = 'uim_auth_theme';
-
-/** Saved choice first; otherwise follow the device setting. */
-export function readAuthTheme(): AuthTheme {
-  try {
-    const saved = localStorage.getItem(THEME_KEY);
-    if (saved === 'light' || saved === 'dark') return saved;
-  } catch { /* storage is optional */ }
-  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
-export function saveAuthTheme(theme: AuthTheme) {
-  try { localStorage.setItem(THEME_KEY, theme); } catch { /* storage is optional */ }
-}
+export type { Theme as AuthTheme } from '../../theme';
 
 const en = {
   languageLabel: 'Language',
