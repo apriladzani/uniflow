@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../../api/client';
-import { AUTH_COPY, AuthLang } from './authCopy';
+import { AUTH_COPY, AuthLang, AuthTheme } from './authCopy';
 
 type GoogleIdentity = {
   initialize: (config: { client_id: string; callback: (result: { credential: string }) => void }) => void;
@@ -30,11 +30,12 @@ function loadGoogleScript() {
 interface GoogleSignInButtonProps {
   mode: 'signin' | 'signup';
   lang: AuthLang;
+  theme?: AuthTheme;
   onCredential: (credential: string) => void;
 }
 
 /** Renders nothing until backend/.env provides GOOGLE_CLIENT_ID. */
-export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ mode, lang, onCredential }) => {
+export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ mode, lang, theme = 'light', onCredential }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [clientId, setClientId] = useState('');
   const [failed, setFailed] = useState(false);
@@ -61,7 +62,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ mode, la
       }
       containerRef.current.replaceChildren();
       identity.renderButton(containerRef.current, {
-        theme: 'outline',
+        theme: theme === 'dark' ? 'filled_black' : 'outline',
         size: 'large',
         shape: 'rectangular',
         text: 'continue_with',
@@ -71,7 +72,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ mode, la
       });
     }).catch(() => { if (active) setFailed(true); });
     return () => { active = false; };
-  }, [clientId, mode, lang]);
+  }, [clientId, mode, lang, theme]);
 
   if (!clientId) return null;
   const t = AUTH_COPY[lang];

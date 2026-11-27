@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, AtSign, Building2, Check, ChevronRight, Clapperboard, Eye, EyeOff, Film, Lock, LogOut, LoaderCircle, Mail, Plus, Sparkles, User, Users, Video } from 'lucide-react';
+import { ArrowLeft, ArrowRight, AtSign, Building2, Check, ChevronRight, Clapperboard, Eye, EyeOff, Film, Lock, LogOut, LoaderCircle, Mail, Moon, Plus, Sparkles, Sun, User, Users, Video } from 'lucide-react';
 import { CMSProvider, useCMS } from './context/CMSContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
@@ -19,7 +19,8 @@ import { AdminView } from './components/admin/AdminView';
 import { BrandLogo } from './branding';
 import { GoogleSignInButton } from './components/auth/GoogleSignInButton';
 import { ForgotPasswordForm } from './components/auth/ForgotPasswordForm';
-import { AUTH_COPY, AuthLang, readAuthLang, saveAuthLang } from './components/auth/authCopy';
+import { AUTH_COPY, AuthLang, AuthTheme, readAuthLang, readAuthTheme, saveAuthLang, saveAuthTheme } from './components/auth/authCopy';
+import { LanguageFlag } from './components/auth/LanguageFlag';
 import { ContentModal } from './components/modals/ContentModal';
 import { PublishVerificationModal } from './components/modals/PublishVerificationModal';
 import { ContentItem } from './types/cms';
@@ -35,6 +36,12 @@ const AuthScreen: React.FC = () => {
   const [lang, setLangState] = useState<AuthLang>(readAuthLang);
   const t = AUTH_COPY[lang];
   const setLang = (next: AuthLang) => { setLangState(next); saveAuthLang(next); };
+  const [theme, setThemeState] = useState<AuthTheme>(readAuthTheme);
+  const toggleTheme = () => setThemeState((current) => {
+    const next = current === 'dark' ? 'light' : 'dark';
+    saveAuthTheme(next);
+    return next;
+  });
   useEffect(() => {
     const previous = document.documentElement.lang;
     document.documentElement.lang = lang;
@@ -168,7 +175,7 @@ const AuthScreen: React.FC = () => {
   const at = (ms: number) => ({ '--d': `${ms}ms` } as React.CSSProperties);
 
   return (
-    <main className="auth-page">
+    <main className={`auth-page${theme === 'dark' ? ' is-dark' : ''}`}>
       {/* Full-bleed photo plate: never animated. Shades sit above it, UI above those. */}
       <img src={podcastStudioImage} alt="" className="auth-plate" />
       <div className="auth-shade" aria-hidden="true" />
@@ -221,10 +228,14 @@ const AuthScreen: React.FC = () => {
         <div className="auth-form">
           <div className="auth-card-head auth-anim auth-rise" style={rise(0)}>
             <span className="auth-card-eyebrow"><span className="auth-dot auth-dot-green" /> {t.memberAccess}</span>
-            <div className="auth-lang" role="group" aria-label={t.languageLabel}>
-              {(['en', 'id'] as const).map((option) => (
-                <button key={option} type="button" lang={option} aria-pressed={lang === option} onClick={() => setLang(option)} className={lang === option ? 'is-active' : ''}>{option.toUpperCase()}</button>
-              ))}
+            <div className="auth-prefs">
+              <button type="button" className="auth-lang" onClick={() => setLang(lang === 'en' ? 'id' : 'en')} aria-label={`${t.languageLabel}: ${lang === 'en' ? 'English' : 'Bahasa Indonesia'}. ${t.switchLanguage}`}>
+                <LanguageFlag lang={lang} className="auth-lang-flag" />
+                <span>{lang.toUpperCase()}</span>
+              </button>
+              <button type="button" className="auth-theme" onClick={toggleTheme} aria-label={theme === 'dark' ? t.lightMode : t.darkMode} aria-pressed={theme === 'dark'}>
+                {theme === 'dark' ? <Sun /> : <Moon />}
+              </button>
             </div>
           </div>
           {forgotPassword ? (
@@ -319,7 +330,7 @@ const AuthScreen: React.FC = () => {
             )}
           </form>
 
-          {!pendingGoogleCredential && !(mode === 'signup' && signupStep === 2) && <div className="auth-google auth-anim auth-rise" style={rise(6)}><GoogleSignInButton mode={mode} lang={lang} onCredential={handleGoogleCredential} /></div>}
+          {!pendingGoogleCredential && !(mode === 'signup' && signupStep === 2) && <div className="auth-google auth-anim auth-rise" style={rise(6)}><GoogleSignInButton mode={mode} lang={lang} theme={theme} onCredential={handleGoogleCredential} /></div>}
 
           <p className="auth-switch auth-anim auth-rise" style={rise(7)}>{mode === 'signin' ? t.noAccount : t.haveAccount}{' '}<button type="button" onClick={() => changeMode(mode === 'signin' ? 'signup' : 'signin')}>{mode === 'signin' ? t.signUp : t.signIn}</button></p>
           </>}

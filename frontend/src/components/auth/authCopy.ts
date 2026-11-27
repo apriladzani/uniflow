@@ -13,8 +13,27 @@ export function saveAuthLang(lang: AuthLang) {
   try { localStorage.setItem(STORAGE_KEY, lang); } catch { /* storage is optional */ }
 }
 
+export type AuthTheme = 'light' | 'dark';
+const THEME_KEY = 'uim_auth_theme';
+
+/** Saved choice first; otherwise follow the device setting. */
+export function readAuthTheme(): AuthTheme {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'light' || saved === 'dark') return saved;
+  } catch { /* storage is optional */ }
+  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+export function saveAuthTheme(theme: AuthTheme) {
+  try { localStorage.setItem(THEME_KEY, theme); } catch { /* storage is optional */ }
+}
+
 const en = {
   languageLabel: 'Language',
+  switchLanguage: 'Switch to Bahasa Indonesia',
+  darkMode: 'Switch to dark mode',
+  lightMode: 'Switch to light mode',
   // Hero
   heroLabel: 'Uni Inside Media creative studio',
   tagline: 'Creative Studio',
@@ -114,6 +133,9 @@ export type AuthCopy = typeof en;
 
 const id: AuthCopy = {
   languageLabel: 'Bahasa',
+  switchLanguage: 'Ganti ke English',
+  darkMode: 'Ganti ke mode gelap',
+  lightMode: 'Ganti ke mode terang',
   heroLabel: 'Studio kreatif Uni Inside Media',
   tagline: 'Studio Kreatif',
   onLocation: 'DI LOKASI',
