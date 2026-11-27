@@ -89,9 +89,8 @@ const AuthScreen: React.FC = () => {
       await loginWithGoogle(credential);
     } catch (googleError) {
       if (googleError instanceof ApiError && googleError.code === 'GOOGLE_LINK_PASSWORD_REQUIRED') {
-        const claims = JSON.parse(atob(credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
         setMode('signin');
-        setEmail(claims.email || '');
+        setEmail(typeof googleError.data.email === 'string' ? googleError.data.email : '');
         setPassword('');
         setPendingGoogleCredential(credential);
         setNotice(googleError.message);

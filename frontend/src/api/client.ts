@@ -3,11 +3,14 @@ export class ApiError extends Error {
   code: string;
   /** Form field the server rejected, when it reports one. */
   field?: string;
-  constructor(status: number, code: string, message: string, field?: string) {
+  /** The full error body, for errors that carry extra details. */
+  data: Record<string, unknown>;
+  constructor(status: number, code: string, message: string, field?: string, data: Record<string, unknown> = {}) {
     super(message);
     this.status = status;
     this.code = code;
     this.field = field;
+    this.data = data;
   }
 }
 
@@ -30,6 +33,6 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   });
   if (response.status === 204) return undefined as T;
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new ApiError(response.status, payload.error || 'REQUEST_FAILED', payload.message || `Request failed (HTTP ${response.status}).`, payload.field);
+  if (!response.ok) throw new ApiError(response.status, payload.error || 'REQUEST_FAILED', payload.message || `Request failed (HTTP ${response.status}).`, payload.field, payload);
   return payload as T;
 }

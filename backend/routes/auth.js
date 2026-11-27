@@ -159,21 +159,47 @@ authRouter.get('/config', (_request, response) => {
 });
 
 // Google Identity Services posts a signed ID token here; it covers both registering and signing in.
+/**
+ * Verifies an OAuth access token from Google's token popup and returns an ID-token-like profile.
+ * Google confirms the token was issued to this app's client ID; the profile then comes from
+ * Google's userinfo endpoint for that same token.
+ */
+async function verifyGoogleAccessToken(accessToken) {
+  const info = await googleClient.getTokenInfo(accessToken);
+  if (info.aud !== googleClientId && info.azp !== googleClientId) throw new Error('GOOGLE_TOKEN_AUDIENCE');
+  const userinfoResponse = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!userinfoResponse.ok) throw new Error('GOOGLE_USERINFO_FAILED');
+  const user = await userinfoResponse.json();
+  if (!user?.sub || (info.sub && info.sub !== user.sub)) throw new Error('GOOGLE_TOKEN_SUBJECT');
+  return { sub: user.sub, email: user.email, email_verified: user.email_verified === true, name: user.name, picture: user.picture };
+}
+
 authRouter.post('/google', async (request, response, next) => {
   if (!googleClient) {
     response.status(503).json({ error: 'GOOGLE_NOT_CONFIGURED', message: 'Google sign-in is not configured. Add GOOGLE_CLIENT_ID to backend/.env.' });
     return;
   }
-  const { credential, password } = request.body || {};
-  if (typeof credential !== 'string' || !credential) {
+  // Two ways in: an ID token from Google's rendered button (`credential`), or an OAuth access
+  // token from the page's own "Continue with Google" button (`accessToken`, Google popup).
+  const { credential, accessToken, password } = request.body || {};
+  const hasCredential = typeof credential === 'string' && credential.length > 0;
+  const hasAccessToken = typeof accessToken === 'string' && accessToken.length > 0 && accessToken.length < 4096;
+  if (!hasCredential && !hasAccessToken) {
     response.status(400).json({ error: 'VALIDATION_ERROR', message: 'Google credential is required.' });
     return;
   }
 
   let profile;
   try {
-    const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: googleClientId });
-    profile = ticket.getPayload();
+    if (hasCredential) {
+      const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: googleClientId });
+      profile = ticket.getPayload();
+    } else {
+      profile = await verifyGoogleAccessToken(accessToken);
+    }
   } catch {
     response.status(401).json({ error: 'GOOGLE_TOKEN_INVALID', message: 'Google sign-in could not be verified. Please try again.' });
     return;
@@ -206,7 +232,7 @@ authRouter.post('/google', async (request, response, next) => {
     const linking = Boolean(user && !user.google_sub);
     if (linking && user.password_hash) {
       if (typeof password !== 'string' || !password) {
-        response.status(409).json({ error: 'GOOGLE_LINK_PASSWORD_REQUIRED', message: 'An account with this email already exists. Enter its password once to link Google.' });
+        response.status(409).json({ error: 'GOOGLE_LINK_PASSWORD_REQUIRED', message: 'An account with this email already exists. Enter its password once to link Google.', email });
         return;
       }
       if (!await verifyPassword(password, user.password_hash)) {

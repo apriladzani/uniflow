@@ -463,7 +463,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const loginWithGoogle = async (credential: string, password?: string) => {
-    const { user, created } = await api<{ user: { name: string; email: string; avatarUrl?: string; isPlatformAdmin?: boolean }; created: boolean }>('/auth/google', { method: 'POST', body: JSON.stringify({ credential, password }) });
+    const { user, created } = await api<{ user: { name: string; email: string; avatarUrl?: string; isPlatformAdmin?: boolean }; created: boolean }>('/auth/google', { method: 'POST', body: JSON.stringify({ accessToken: credential, password }) });
     await loadWorkspaces(); setSignedInUser({ name: user.name, email: user.email, avatarUrl: user.avatarUrl || '', isPlatformAdmin: Boolean(user.isPlatformAdmin) }); setIsAuthenticated(true);
     showToast('success', created ? 'Account created' : 'Login successful', created ? 'Create or join a workspace to get started.' : 'Your workspaces are ready.');
   };

@@ -381,7 +381,6 @@
 }
 .auth-page.is-dark .auth-alert-error { border-color: rgba(244, 63, 94, .35); background: rgba(244, 63, 94, .1); color: #FDA4AF; }
 .auth-page.is-dark .auth-alert-notice { border-color: rgba(245, 197, 24, .35); background: rgba(245, 197, 24, .1); color: #FDE68A; }
-.auth-page.is-dark .auth-social { background: #202124; }
 .auth-page.is-dark .auth-lang-flag { box-shadow: 0 0 0 1px rgba(255, 255, 255, .15); }
 .auth-card { transition: background-color .3s ease, box-shadow .3s ease; }
 
@@ -656,27 +655,27 @@
 }
 .auth-or::before, .auth-or::after { content: ''; flex: 1; height: 1px; background: var(--color-line); }
 
-/* Frame around Google's real button: our radius and border, Google's square corners clipped. */
+/* "Continue with Google": our own button (Google's popup does the sign-in), so it matches the
+   other form buttons in both themes; the G logo sits directly on the button, no white tile. */
 .auth-social {
-  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(9 * var(--cu));
+  width: 100%;
   height: calc(38 * var(--cu));
   border: 1px solid var(--color-line);
   border-radius: calc(8 * var(--cu));
   background: var(--auth-raised);
-  overflow: hidden;
+  color: var(--color-ink);
+  font-size: calc(13.5 * var(--cu));
+  font-weight: 600;
+  transition: background-color .15s, border-color .15s;
 }
-.auth-social:focus-within { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-/* No transform here: Google checks its button is plainly visible before accepting clicks. */
-.auth-social-google {
-  position: absolute;
-  left: -3px;
-  right: -3px;
-  top: calc(50% - 22px);
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+.auth-social:hover:not(:disabled) { background: var(--color-surface-muted); border-color: var(--auth-line-strong); }
+.auth-social:disabled { cursor: default; opacity: .75; }
+.auth-social-logo { width: calc(17 * var(--cu)); height: calc(17 * var(--cu)); flex-shrink: 0; }
+.auth-spin-inline { animation: spin 1s linear infinite; }
 
 .auth-switch { margin: calc(18 * var(--cu)) 0 0; text-align: center; font-size: calc(12.5 * var(--cu)); color: var(--color-muted); }
 .auth-switch button {
