@@ -72,7 +72,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ mode, on
   if (!clientId) return null;
   return (
     <div className="mt-4">
-      <div className="mb-4 flex items-center gap-3"><div className="h-px flex-1 bg-slate-100" /><span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">or</span><div className="h-px flex-1 bg-slate-100" /></div>
+      <div className="mb-4 flex items-center gap-3"><div className="h-px flex-1 bg-slate-100" /><span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">or</span><div className="h-px flex-1 bg-slate-100" /></div>
       {failed
         ? <p role="status" className="text-center text-xs text-slate-500">Google sign-in could not be loaded. Use your email and password instead.</p>
         : <div ref={containerRef} className="flex min-h-10 w-full justify-center" />}

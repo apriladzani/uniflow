@@ -144,88 +144,115 @@ const AuthScreen: React.FC = () => {
     } finally { setLoading(false); }
   };
 
+  // Card contents rise in turn, 70ms apart, once the card has settled.
+  const rise = (index: number) => ({ '--d': `${420 + index * 70}ms` } as React.CSSProperties);
+  const at = (ms: number) => ({ '--d': `${ms}ms` } as React.CSSProperties);
+
   return (
-    <main className="auth-shell h-screen min-h-0 overflow-hidden bg-white lg:grid lg:grid-cols-2">
-      <section className="auth-visual relative hidden h-full min-h-0 overflow-hidden lg:flex" aria-label="Uni Inside Media creative team">
-        <img src={podcastStudioImage} alt="Podcast studio prepared for a content shoot" className="auth-visual-photo absolute inset-0 h-full w-full object-cover" />
-        <div className="auth-visual-shade absolute inset-0" />
-        <div className="auth-grain absolute inset-0" />
-        <div className="relative z-10 flex h-full w-full flex-col p-7 xl:p-10">
-          <div className="flex items-center gap-3 text-white">
-            <BrandLogo className="h-11 w-11 rounded-[14px] shadow-lg shadow-black/10" imageClassName="h-12 w-auto max-w-[160px] rounded-xl shadow-lg shadow-black/10" iconClassName="h-5 w-5" strokeWidth={2.4} />
-            <div><div className="text-[15px] font-extrabold tracking-tight">UNI INSIDE MEDIA</div><div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/60">Creative Studio</div></div>
-          </div>
+    <main className="auth-page">
+      {/* Full-bleed photo plate: never animated. Shades sit above it, UI above those. */}
+      <img src={podcastStudioImage} alt="" className="auth-plate" />
+      <div className="auth-shade" aria-hidden="true" />
 
-          <div className="auth-art flex min-h-0 flex-1 items-center justify-center py-4" aria-hidden="true">
-            <div className="auth-frame relative aspect-[1.08] w-full max-w-[500px]">
-              <div className="auth-orbit auth-orbit-one" /><div className="auth-orbit auth-orbit-two" />
-              <div className="auth-art-image absolute inset-[12%_8%_14%_16%] overflow-hidden rounded-[34px] border border-white/25 shadow-2xl shadow-black/40">
-                <img src={campusBrollImage} alt="" className="h-full w-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-transparent to-white/10" />
-                <div className="absolute bottom-5 left-5 flex items-center gap-2 rounded-full border border-white/25 bg-slate-950/40 px-3 py-2 text-[11px] font-semibold text-white backdrop-blur-md"><span className="h-2 w-2 rounded-full bg-[#F5C518]" /> ON LOCATION <span className="text-white/50">•</span> 04:32</div>
-              </div>
-              <div className="auth-float-card auth-float-top absolute right-0 top-[13%] flex items-center gap-3 rounded-2xl border border-white/60 bg-white/95 p-3.5 shadow-xl shadow-black/15 backdrop-blur">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700"><Video className="h-5 w-5" /></div><div><div className="text-[11px] font-bold text-slate-900">Shoot day</div><div className="mt-0.5 text-[10px] text-slate-500">Campus stories · In progress</div></div><span className="ml-1 h-2 w-2 rounded-full bg-emerald-500" />
-              </div>
-              <div className="auth-float-card auth-float-bottom absolute bottom-[8%] left-0 flex items-center gap-3 rounded-2xl border border-white/60 bg-white/95 p-3.5 shadow-xl shadow-black/15 backdrop-blur">
-                <div className="flex -space-x-2"><img src={creativeLeadAvatar} alt="" className="h-9 w-9 rounded-full border-2 border-white object-cover" /><img src={videoEditorAvatar} alt="" className="h-9 w-9 rounded-full border-2 border-white object-cover" /><div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-[#F5C518] text-[10px] font-bold text-slate-900">+4</div></div><div><div className="text-[11px] font-bold text-slate-900">Made together</div><div className="mt-0.5 text-[10px] text-slate-500">One team, one story</div></div><Users className="ml-2 h-4 w-4 text-slate-400" />
-              </div>
-              <div className="auth-floating-mark absolute right-[15%] top-[38%] flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F5C518] text-slate-950 shadow-lg shadow-black/20"><Film className="h-5 w-5" /></div>
-            </div>
+      <section className="auth-hero" aria-label="Uni Inside Media creative studio">
+        <div className="auth-brand auth-anim auth-fade-up" style={at(0)}>
+          <BrandLogo className="auth-logo" imageClassName="auth-logo auth-logo-image" iconClassName="auth-logo-icon" strokeWidth={2.4} />
+          <div>
+            <div className="auth-brand-name">UNI INSIDE MEDIA</div>
+            <div className="auth-brand-tagline">Creative Studio</div>
           </div>
+        </div>
 
-          <div className="max-w-lg pb-1 text-white">
-            <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#F5C518]"><span className="h-px w-7 bg-[#F5C518]" /> Stories move us forward</div>
-            <h1 className="max-w-[560px] text-[30px] font-bold leading-[1.13] tracking-[-0.04em] xl:text-[36px]">Make good stories.<br /><span className="text-[#F5C518]">Make them together.</span></h1>
-            <p className="mt-3 max-w-md text-[13px] leading-5 text-white/70">Your creative home for planning, producing, and sharing the stories that bring our community closer.</p>
+        <div className="auth-collage" aria-hidden="true">
+          <div className="auth-ring auth-ring-inner"><span /></div>
+          <div className="auth-ring auth-ring-outer"><span /></div>
+          <div className="auth-campus auth-anim auth-scale-in" style={at(300)}>
+            <div className="auth-campus-photo"><img src={campusBrollImage} alt="" /></div>
+            <div className="auth-campus-pill"><span className="auth-dot auth-dot-yellow" /> ON LOCATION <span className="auth-campus-sep">·</span> 04:32</div>
           </div>
-          <div className="mt-5 flex items-center justify-between text-[10px] text-white/45"><span>© 2025 Uni Inside Media</span><span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#F5C518]" /> Stories made with purpose</span></div>
+          <div className="auth-chip auth-chip-shoot">
+            <div className="auth-chip-icon"><Video /></div>
+            <div className="auth-chip-text"><div className="auth-chip-title">Shoot day</div><div className="auth-chip-sub">Campus stories · In progress</div></div>
+            <span className="auth-dot auth-dot-green" />
+          </div>
+          <div className="auth-chip auth-chip-team">
+            <div className="auth-avatars"><img src={creativeLeadAvatar} alt="" /><img src={videoEditorAvatar} alt="" /><span>+4</span></div>
+            <div className="auth-chip-text"><div className="auth-chip-title">Made together</div><div className="auth-chip-sub">One team, one story</div></div>
+            <Users className="auth-chip-trail" />
+          </div>
+          <div className="auth-film"><Film /></div>
+        </div>
+
+        <div className="auth-pitch">
+          <div className="auth-eyebrow auth-anim auth-fade" style={at(700)}><span /> Stories move us forward</div>
+          <h1 className="auth-headline">
+            <span className="auth-line"><span className="auth-anim auth-wipe" style={at(800)}>Make good stories.</span></span>
+            <span className="auth-line"><span className="auth-anim auth-wipe auth-headline-accent" style={at(900)}>Make them together.</span></span>
+          </h1>
+          <p className="auth-subline auth-anim auth-fade-up" style={at(1050)}>Your creative home for planning, producing, and sharing the stories that bring our community closer.</p>
+        </div>
+
+        <div className="auth-footer auth-anim auth-fade" style={at(1150)}>
+          <span>© 2025 Uni Inside Media</span>
+          <span className="auth-footer-right"><span className="auth-dot auth-dot-yellow" /> Stories made with purpose</span>
         </div>
       </section>
 
-      <section className="auth-form-side relative flex h-full min-h-0 items-center justify-center overflow-y-auto overscroll-contain px-5 py-6 sm:px-10 lg:px-10 xl:px-16">
-        <div className="absolute left-6 top-6 flex items-center gap-2.5 lg:hidden"><BrandLogo className="h-9 w-9 rounded-xl" imageClassName="h-10 w-auto max-w-[120px] rounded-lg" iconClassName="h-4 w-4" /><span className="text-xs font-extrabold tracking-wide text-slate-900">UNI INSIDE MEDIA</span></div>
-        <div className="auth-form-content w-full max-w-[420px] py-10 lg:py-0">
-          <div className="mb-5 hidden items-center justify-between lg:flex"><div className="text-xs font-semibold text-slate-400">Member access</div><div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> YOUR CREATIVE WORKSPACE</div></div>
+      <section className="auth-card auth-anim auth-card-in" style={at(150)} aria-label={mode === 'signin' ? 'Sign in' : 'Create an account'}>
+        <div className="auth-form">
+          <div className="auth-card-head auth-anim auth-rise" style={rise(0)}>
+            <span>Member access</span>
+            <span className="auth-card-status"><span className="auth-dot auth-dot-green" /> YOUR CREATIVE WORKSPACE</span>
+          </div>
           {forgotPassword ? (
-            <ForgotPasswordForm
-              initialEmail={forgotLinkEmail || email}
-              initialStep={forgotLinkEmail ? 'otp' : 'email'}
-              onCancel={leaveForgotPassword}
-              onComplete={(resetEmail) => {
-                setEmail(resetEmail);
-                setPassword('');
-                leaveForgotPassword();
-                setNotice('Your password has been updated. Sign in with your new password.');
-              }}
-            />
+            <div className="auth-forgot auth-anim auth-rise" style={rise(1)}>
+              <ForgotPasswordForm
+                initialEmail={forgotLinkEmail || email}
+                initialStep={forgotLinkEmail ? 'otp' : 'email'}
+                onCancel={leaveForgotPassword}
+                onComplete={(resetEmail) => {
+                  setEmail(resetEmail);
+                  setPassword('');
+                  leaveForgotPassword();
+                  setNotice('Your password has been updated. Sign in with your new password.');
+                }}
+              />
+            </div>
           ) : <>
-          <div className="mb-5">
-            <h2 className="text-[30px] font-bold tracking-[-0.04em] text-slate-900">{mode === 'signin' ? 'Welcome back' : 'Create your account'}</h2>
-            <p className="mt-1.5 text-[13px] leading-5 text-slate-500">{mode === 'signin' ? 'Sign in to pick up where your team left off.' : 'Join your team and bring your next story to life.'}</p>
+          <div className="auth-title auth-anim auth-rise" style={rise(1)}>
+            <h2>{mode === 'signin' ? 'Welcome back' : 'Create your account'}</h2>
+            <p>{mode === 'signin' ? 'Sign in to pick up where your team left off.' : 'Join your team and bring your next story to life.'}</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
-            {mode === 'signup' && <div><label htmlFor="auth-name" className="mb-2 block text-xs font-semibold text-slate-700">Full name</label><input id="auth-name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" required minLength={2} className="auth-input" placeholder="Your full name" /></div>}
-            {mode === 'signup' && <div><label htmlFor="auth-username" className="mb-2 block text-xs font-semibold text-slate-700">Username</label><input id="auth-username" value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" required minLength={3} maxLength={30} pattern="[A-Za-z0-9_]{3,30}" className="auth-input" placeholder="e.g. apriladzani" /><p className="mt-1 text-[10px] text-slate-400">Use letters, numbers, and underscores.</p></div>}
-            <div><label htmlFor="auth-email" className="mb-2 block text-xs font-semibold text-slate-700">Email address</label><input id="auth-email" type="email" value={email} readOnly={Boolean(pendingGoogleCredential)} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required className="auth-input" placeholder="you@example.com" /></div>
-            <div><div className="mb-2 flex items-center justify-between"><label htmlFor="auth-password" className="block text-xs font-semibold text-slate-700">Password</label>{mode === 'signin' && <button type="button" onClick={() => { setError(''); setNotice(''); setForgotPassword(true); }} className="text-[11px] font-semibold text-slate-500 transition hover:text-slate-900">Forgot password?</button>}</div><div className="relative"><input id="auth-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} required minLength={8} className="auth-input pr-12" placeholder={mode === 'signin' ? 'Enter your password' : 'At least 8 characters'} /><button type="button" onClick={() => setShowPassword((visible) => !visible)} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-400 transition hover:text-slate-700" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></div>
-            {mode === 'signup' && <div><label htmlFor="auth-confirm" className="mb-2 block text-xs font-semibold text-slate-700">Confirm password</label><div className="relative"><input id="auth-confirm" type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" required minLength={8} className="auth-input pr-12" placeholder="Enter your password again" /><span className="pointer-events-none absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-300"><Check className="h-4 w-4" /></span></div></div>}
-            {mode === 'signin' && <label className="flex cursor-pointer items-center gap-2.5 text-xs text-slate-600"><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} className="h-3.5 w-3.5 rounded border-slate-300 accent-[#F5C518]" />Remember me</label>}
-            {error && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-3 text-xs leading-5 text-rose-700">{error}</div>}
-            {notice && <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-xs leading-5 text-amber-800">{notice}</div>}
-            <button type="submit" disabled={loading} className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#F5C518] px-4 py-[13px] text-sm font-bold text-slate-950 shadow-[0_5px_12px_rgba(245,197,24,0.17)] transition hover:bg-[#E5B510] disabled:cursor-wait disabled:opacity-70">{loading ? <><LoaderCircle className="h-4 w-4 animate-spin" /> {mode === 'signin' ? 'Signing in…' : 'Creating account…'}</> : <>{mode === 'signin' ? 'Sign In' : 'Sign Up'}<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></>}</button>
+          <form onSubmit={handleSubmit} className="auth-fields" noValidate>
+            {mode === 'signup' && <div className="auth-field auth-anim auth-rise" style={rise(2)}><label htmlFor="auth-name" className="auth-label">Full name</label><input id="auth-name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" required minLength={2} className="auth-input" placeholder="Your full name" /></div>}
+            {mode === 'signup' && <div className="auth-field auth-anim auth-rise" style={rise(2)}><label htmlFor="auth-username" className="auth-label">Username</label><input id="auth-username" value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" required minLength={3} maxLength={30} pattern="[A-Za-z0-9_]{3,30}" className="auth-input" placeholder="e.g. apriladzani" /><p className="auth-hint">Use letters, numbers, and underscores.</p></div>}
+            <div className="auth-field auth-anim auth-rise" style={rise(2)}><label htmlFor="auth-email" className="auth-label">Email address</label><input id="auth-email" type="email" value={email} readOnly={Boolean(pendingGoogleCredential)} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required className="auth-input" placeholder="Enter your email" /></div>
+            <div className="auth-field auth-anim auth-rise" style={rise(3)}>
+              <div className="auth-label-row"><label htmlFor="auth-password" className="auth-label">Password</label>{mode === 'signin' && <button type="button" onClick={() => { setError(''); setNotice(''); setForgotPassword(true); }} className="auth-link-quiet">Forgot password?</button>}</div>
+              <div className="auth-password"><input id="auth-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} required minLength={8} className="auth-input" placeholder={mode === 'signin' ? 'Enter your password' : 'At least 8 characters'} /><button type="button" onClick={() => setShowPassword((visible) => !visible)} className="auth-eye" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}>{showPassword ? <EyeOff /> : <Eye />}</button></div>
+            </div>
+            {mode === 'signup' && <div className="auth-field auth-anim auth-rise" style={rise(3)}><label htmlFor="auth-confirm" className="auth-label">Confirm password</label><div className="auth-password"><input id="auth-confirm" type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" required minLength={8} className="auth-input" placeholder="Enter your password again" /><span className="auth-eye auth-eye-static" aria-hidden="true"><Check /></span></div></div>}
+            {mode === 'signin' && <label className="auth-remember auth-anim auth-rise" style={rise(4)}><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} className="auth-checkbox" />Remember me</label>}
+            {error && <div role="alert" className="auth-alert auth-alert-error">{error}</div>}
+            {notice && <div role="status" className="auth-alert auth-alert-notice">{notice}</div>}
+            <button type="submit" disabled={loading} className="auth-submit auth-anim auth-rise" style={rise(5)}>{loading ? <><LoaderCircle className="auth-spin" /> {mode === 'signin' ? 'Signing in…' : 'Creating account…'}</> : <>{mode === 'signin' ? 'Sign In' : 'Sign Up'}<ArrowRight className="auth-submit-arrow" /></>}</button>
           </form>
 
-          {!pendingGoogleCredential && <GoogleSignInButton mode={mode} onCredential={handleGoogleCredential} />}
+          {!pendingGoogleCredential && <div className="auth-google auth-anim auth-rise" style={rise(6)}><GoogleSignInButton mode={mode} onCredential={handleGoogleCredential} /></div>}
 
-          <p className="mt-5 text-center text-xs text-slate-500">{mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}{' '}<button type="button" onClick={() => changeMode(mode === 'signin' ? 'signup' : 'signin')} className="font-bold text-slate-900 underline decoration-[#F5C518] decoration-2 underline-offset-[3px] transition hover:text-amber-700">{mode === 'signin' ? 'Sign Up' : 'Sign In'}</button></p>
+          <p className="auth-switch auth-anim auth-rise" style={rise(7)}>{mode === 'signin' ? 'Don’t have an account?' : 'Already have an account?'}{' '}<button type="button" onClick={() => changeMode(mode === 'signin' ? 'signup' : 'signin')}>{mode === 'signin' ? 'Sign Up' : 'Sign In'}</button></p>
           </>}
-          <div className="auth-form-extras">
-            <div className="my-5 flex items-center gap-3"><div className="h-px flex-1 bg-slate-100" /><span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-300">A space to create</span><div className="h-px flex-1 bg-slate-100" /></div>
-            <div className="grid grid-cols-3 gap-2.5 text-center"><div className="rounded-xl bg-slate-50 px-2 py-2.5"><Video className="mx-auto h-4 w-4 text-slate-400" /><div className="mt-1.5 text-[9px] font-semibold text-slate-500">Production</div></div><div className="rounded-xl bg-slate-50 px-2 py-2.5"><Users className="mx-auto h-4 w-4 text-slate-400" /><div className="mt-1.5 text-[9px] font-semibold text-slate-500">Teamwork</div></div><div className="rounded-xl bg-slate-50 px-2 py-2.5"><Film className="mx-auto h-4 w-4 text-slate-400" /><div className="mt-1.5 text-[9px] font-semibold text-slate-500">Storytelling</div></div></div>
-            <p className="mt-5 text-center text-[10px] text-slate-400">By continuing, you agree to our <span className="font-medium text-slate-500">Terms</span> and <span className="font-medium text-slate-500">Privacy Policy</span>.</p>
+
+          <div className="auth-extras">
+            <div className="auth-divider auth-anim auth-rise" style={rise(8)}><span>A space to create</span></div>
+            <div className="auth-tiles auth-anim auth-rise" style={rise(9)}>
+              <div className="auth-tile"><Video /><span>Production</span></div>
+              <div className="auth-tile"><Users /><span>Teamwork</span></div>
+              <div className="auth-tile"><Film /><span>Storytelling</span></div>
+            </div>
           </div>
+          <p className="auth-legal auth-anim auth-rise" style={rise(10)}>By continuing, you agree to our <span>Terms</span> and <span>Privacy Policy</span>.</p>
         </div>
       </section>
     </main>
