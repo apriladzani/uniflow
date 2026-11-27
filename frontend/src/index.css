@@ -609,6 +609,41 @@
 }
 .auth-or::before, .auth-or::after { content: ''; flex: 1; height: 1px; background: var(--color-line); }
 
+/* Social sign-in button styled like our buttons; Google's own button sits on top, invisible. */
+.auth-social {
+  position: relative;
+  height: calc(38 * var(--cu));
+  border: 1px solid var(--color-line);
+  border-radius: calc(8 * var(--cu));
+  background: var(--color-surface);
+  overflow: hidden;
+  transition: background-color .15s, border-color .15s;
+}
+.auth-social:hover { background: var(--color-surface-muted); border-color: #CBD5E1; }
+.auth-social:focus-within { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.auth-social-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(9 * var(--cu));
+  font-size: calc(13.5 * var(--cu));
+  font-weight: 600;
+  color: var(--color-ink);
+  pointer-events: none;
+}
+.auth-social-logo { width: calc(17 * var(--cu)); height: calc(17 * var(--cu)); }
+.auth-social-google {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: .01;
+}
+.auth-social-google > div, .auth-social-google iframe { width: 100% !important; }
+
 .auth-switch { margin: calc(18 * var(--cu)) 0 0; text-align: center; font-size: calc(12.5 * var(--cu)); color: var(--color-muted); }
 .auth-switch button {
   font-weight: 700;

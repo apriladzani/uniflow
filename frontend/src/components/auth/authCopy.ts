@@ -77,6 +77,7 @@ const en = {
   legalAfter: '.',
   or: 'or',
   orContinue: 'Or continue with',
+  continueWithGoogle: 'Continue with Google',
   googleFailed: 'Google sign-in could not be loaded. Use your email and password instead.',
   // Validation and status
   errName: 'Please enter your full name.',
@@ -175,6 +176,7 @@ const id: AuthCopy = {
   legalAfter: ' kami.',
   or: 'atau',
   orContinue: 'Atau lanjutkan dengan',
+  continueWithGoogle: 'Lanjutkan dengan Google',
   googleFailed: 'Login Google tidak bisa dimuat. Gunakan email dan kata sandimu.',
   errName: 'Masukkan nama lengkapmu.',
   errUsername: 'Username harus 3–30 karakter dan hanya berisi huruf, angka, atau garis bawah.',
