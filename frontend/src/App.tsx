@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Building2, Check, ChevronRight, Clapperboard, Eye, EyeOff, Film, LogOut, LoaderCircle, Plus, Sparkles, Users, Video } from 'lucide-react';
+import { ArrowLeft, ArrowRight, AtSign, Building2, Check, ChevronRight, Clapperboard, Eye, EyeOff, Film, Lock, LogOut, LoaderCircle, Mail, Plus, Sparkles, User, Users, Video } from 'lucide-react';
 import { CMSProvider, useCMS } from './context/CMSContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
@@ -49,6 +49,8 @@ const AuthScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  // Sign-up is split in two steps (account details, then password) so the card keeps the sign-in size.
+  const [signupStep, setSignupStep] = useState<1 | 2>(1);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -69,6 +71,7 @@ const AuthScreen: React.FC = () => {
 
   const changeMode = (next: 'signin' | 'signup') => {
     setMode(next);
+    setSignupStep(1);
     setPendingGoogleCredential('');
     window.history.replaceState(null, '', next === 'signup' ? '#signup' : window.location.pathname);
     setError('');
@@ -117,16 +120,21 @@ const AuthScreen: React.FC = () => {
     const password = field('auth-password', passwordState);
     const confirmPassword = field('auth-confirm', confirmPasswordState);
     setName(name); setUsername(username); setEmail(email); setPassword(password); setConfirmPassword(confirmPassword);
-    if (mode === 'signup' && name.trim().length < 2) {
+    const signupDetails = mode === 'signup' && signupStep === 1;
+    if (signupDetails && name.trim().length < 2) {
       setError(t.errName);
       return;
     }
-    if (mode === 'signup' && !/^[a-z0-9_]{3,30}$/i.test(username.trim())) {
+    if (signupDetails && !/^[a-z0-9_]{3,30}$/i.test(username.trim())) {
       setError(t.errUsername);
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    if ((mode === 'signin' || signupDetails) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setError(t.errEmail);
+      return;
+    }
+    if (signupDetails) {
+      setSignupStep(2);
       return;
     }
     if (password.length < 8) {
@@ -149,6 +157,8 @@ const AuthScreen: React.FC = () => {
       else await (mode === 'signin' ? login(email, password) : register(name, username, email, password));
     } catch (submitError) {
       if (submitError instanceof ApiError && submitError.code === 'GOOGLE_TOKEN_INVALID') setPendingGoogleCredential('');
+      // A taken username or email is fixed on the first step.
+      if (submitError instanceof ApiError && (submitError.code === 'USERNAME_IN_USE' || submitError.code === 'EMAIL_IN_USE')) setSignupStep(1);
       setError(submitError instanceof ApiError ? submitError.message : t.errNetwork);
     } finally { setLoading(false); }
   };
@@ -238,22 +248,75 @@ const AuthScreen: React.FC = () => {
             <p>{mode === 'signin' ? t.signInSub : t.signUpSub}</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="auth-fields" noValidate>
-            {mode === 'signup' && <div className="auth-field auth-anim auth-rise" style={rise(2)}><label htmlFor="auth-name" className="auth-label">{t.fullName}</label><input id="auth-name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" required minLength={2} className="auth-input" placeholder={t.fullNamePlaceholder} /></div>}
-            {mode === 'signup' && <div className="auth-field auth-anim auth-rise" style={rise(2)}><label htmlFor="auth-username" className="auth-label">{t.username}</label><input id="auth-username" value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" required minLength={3} maxLength={30} pattern="[A-Za-z0-9_]{3,30}" className="auth-input" placeholder={t.usernamePlaceholder} /><p className="auth-hint">{t.usernameHint}</p></div>}
-            <div className="auth-field auth-anim auth-rise" style={rise(2)}><label htmlFor="auth-email" className="auth-label">{t.email}</label><input id="auth-email" type="email" value={email} readOnly={Boolean(pendingGoogleCredential)} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required className="auth-input" placeholder={t.emailPlaceholder} /></div>
-            <div className="auth-field auth-anim auth-rise" style={rise(3)}>
-              <div className="auth-label-row"><label htmlFor="auth-password" className="auth-label">{t.password}</label>{mode === 'signin' && <button type="button" onClick={() => { setError(''); setNotice(''); setForgotPassword(true); }} className="auth-link-quiet">{t.forgotPassword}</button>}</div>
-              <div className="auth-password"><input id="auth-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} required minLength={8} className="auth-input" placeholder={mode === 'signin' ? t.passwordPlaceholder : t.newPasswordPlaceholder} /><button type="button" onClick={() => setShowPassword((visible) => !visible)} className="auth-eye" aria-label={showPassword ? t.hidePassword : t.showPassword} aria-pressed={showPassword}>{showPassword ? <EyeOff /> : <Eye />}</button></div>
+          {mode === 'signup' && (
+            <div className="auth-step auth-anim auth-rise" style={rise(2)}>
+              <span className="auth-step-num">{signupStep}</span>
+              <span className="auth-step-title">{signupStep === 1 ? t.stepAccount : t.stepPassword}</span>
+              <span className="auth-step-dots" role="img" aria-label={t.stepOf(signupStep)}>
+                {[1, 2].map((step) => <span key={step} className={step === signupStep ? 'is-active' : step < signupStep ? 'is-done' : ''} />)}
+              </span>
             </div>
-            {mode === 'signup' && <div className="auth-field auth-anim auth-rise" style={rise(3)}><label htmlFor="auth-confirm" className="auth-label">{t.confirmPassword}</label><div className="auth-password"><input id="auth-confirm" type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" required minLength={8} className="auth-input" placeholder={t.confirmPasswordPlaceholder} /><span className="auth-eye auth-eye-static" aria-hidden="true"><Check /></span></div></div>}
-            {mode === 'signin' && <label className="auth-remember auth-anim auth-rise" style={rise(4)}><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} className="auth-checkbox" />{t.rememberMe}</label>}
+          )}
+
+          <form onSubmit={handleSubmit} className="auth-fields" noValidate>
+            {mode === 'signin' && <>
+              <div className="auth-field auth-anim auth-rise" style={rise(2)}>
+                <label htmlFor="auth-email" className="auth-label">{t.email}</label>
+                <div className="auth-control"><Mail className="auth-control-icon" /><input id="auth-email" type="email" value={email} readOnly={Boolean(pendingGoogleCredential)} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required className="auth-input" placeholder={t.emailPlaceholder} /></div>
+              </div>
+              <div className="auth-field auth-anim auth-rise" style={rise(3)}>
+                <div className="auth-label-row"><label htmlFor="auth-password" className="auth-label">{t.password}</label><button type="button" onClick={() => { setError(''); setNotice(''); setForgotPassword(true); }} className="auth-link-quiet">{t.forgotPassword}</button></div>
+                <div className="auth-control auth-password"><Lock className="auth-control-icon" /><input id="auth-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required minLength={8} className="auth-input" placeholder={t.passwordPlaceholder} /><button type="button" onClick={() => setShowPassword((visible) => !visible)} className="auth-eye" aria-label={showPassword ? t.hidePassword : t.showPassword} aria-pressed={showPassword}>{showPassword ? <EyeOff /> : <Eye />}</button></div>
+              </div>
+              <label className="auth-remember auth-anim auth-rise" style={rise(4)}><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} className="auth-checkbox" />{t.rememberMe}</label>
+            </>}
+
+            {mode === 'signup' && signupStep === 1 && <>
+              <div className="auth-row auth-anim auth-rise" style={rise(3)}>
+                <div className="auth-field">
+                  <label htmlFor="auth-name" className="auth-label">{t.fullName}</label>
+                  <div className="auth-control"><User className="auth-control-icon" /><input id="auth-name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" required minLength={2} className="auth-input" placeholder={t.fullNamePlaceholder} autoFocus={!name} /></div>
+                </div>
+                <div className="auth-field">
+                  <label htmlFor="auth-username" className="auth-label">{t.username}</label>
+                  <div className="auth-control"><AtSign className="auth-control-icon" /><input id="auth-username" value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" required minLength={3} maxLength={30} pattern="[A-Za-z0-9_]{3,30}" title={t.usernameHint} className="auth-input" placeholder={t.usernamePlaceholder} /></div>
+                </div>
+              </div>
+              <div className="auth-field auth-anim auth-rise" style={rise(4)}>
+                <label htmlFor="auth-email" className="auth-label">{t.email}</label>
+                <div className="auth-control"><Mail className="auth-control-icon" /><input id="auth-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required className="auth-input" placeholder={t.emailPlaceholder} /></div>
+              </div>
+            </>}
+
+            {mode === 'signup' && signupStep === 2 && (
+              <div className="auth-row auth-step-enter">
+                <div className="auth-field">
+                  <label htmlFor="auth-password" className="auth-label">{t.password}</label>
+                  <div className="auth-control auth-password"><Lock className="auth-control-icon" /><input id="auth-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" required minLength={8} className="auth-input" placeholder={t.passwordShortPlaceholder} autoFocus /><button type="button" onClick={() => setShowPassword((visible) => !visible)} className="auth-eye" aria-label={showPassword ? t.hidePassword : t.showPassword} aria-pressed={showPassword}>{showPassword ? <EyeOff /> : <Eye />}</button></div>
+                </div>
+                <div className="auth-field">
+                  <label htmlFor="auth-confirm" className="auth-label">{t.confirmPassword}</label>
+                  <div className="auth-control auth-password"><Lock className="auth-control-icon" /><input id="auth-confirm" type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" required minLength={8} className="auth-input" placeholder={t.confirmShortPlaceholder} /><span className="auth-eye auth-eye-static" aria-hidden="true"><Check /></span></div>
+                </div>
+              </div>
+            )}
+
             {error && <div role="alert" className="auth-alert auth-alert-error">{error}</div>}
             {notice && <div role="status" className="auth-alert auth-alert-notice">{notice}</div>}
-            <button type="submit" disabled={loading} className="auth-submit auth-anim auth-rise" style={rise(5)}>{loading ? <><LoaderCircle className="auth-spin" /> {mode === 'signin' ? t.signingIn : t.creatingAccount}</> : <>{mode === 'signin' ? t.signIn : t.signUp}<ArrowRight className="auth-submit-arrow" /></>}</button>
+
+            {mode === 'signup' && signupStep === 2 ? (
+              <div className="auth-actions">
+                <button type="button" onClick={() => { setSignupStep(1); setError(''); }} className="auth-back-button"><ArrowLeft />{t.back}</button>
+                <button type="submit" disabled={loading} className="auth-submit">{loading ? <><LoaderCircle className="auth-spin" /> {t.creatingAccount}</> : <>{t.createAccount}<ArrowRight className="auth-submit-arrow" /></>}</button>
+              </div>
+            ) : (
+              <button type="submit" disabled={loading} className="auth-submit auth-anim auth-rise" style={rise(5)}>
+                {loading ? <><LoaderCircle className="auth-spin" /> {t.signingIn}</> : <>{mode === 'signin' ? t.signIn : t.nextStep}<ArrowRight className="auth-submit-arrow" /></>}
+              </button>
+            )}
           </form>
 
-          {!pendingGoogleCredential && <div className="auth-google auth-anim auth-rise" style={rise(6)}><GoogleSignInButton mode={mode} lang={lang} onCredential={handleGoogleCredential} /></div>}
+          {!pendingGoogleCredential && !(mode === 'signup' && signupStep === 2) && <div className="auth-google auth-anim auth-rise" style={rise(6)}><GoogleSignInButton mode={mode} lang={lang} onCredential={handleGoogleCredential} /></div>}
 
           <p className="auth-switch auth-anim auth-rise" style={rise(7)}>{mode === 'signin' ? t.noAccount : t.haveAccount}{' '}<button type="button" onClick={() => changeMode(mode === 'signin' ? 'signup' : 'signin')}>{mode === 'signin' ? t.signUp : t.signIn}</button></p>
           </>}
